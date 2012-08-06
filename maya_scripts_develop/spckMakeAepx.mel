@@ -1,0 +1,294 @@
+// spckMakeAepx_v0.5.mel
+//
+// By Daniel Harkness
+
+// Make aepx file for a selected camera and place in _exchange folder
+
+global proc spckMakeAepx() {
+
+
+	//
+	// Declare Default Variables
+	//
+	
+	string $shotNumber		= "XXXX";
+	string $shotNameShort	= "shXXXX";
+	string $shotNameLong	= "";
+	
+	string $sceneNumber		= "XXXX";
+	string $sceneNameShort	= "scXXXX";
+	string $sceneNameLong	= "scXXXX";
+	
+	float  $shotWidth		= "1920";
+	float  $shotHeight		= "720";
+	
+	string $workspacePath	= `workspace -o -q rd`;
+	string $exchangePath 	= $workspacePath;
+	string $renderPath 		= $workspacePath;
+	
+	int $manualOverride = 0;
+
+
+	//
+	// Make sure camera is selected
+	//
+	
+	string $select[] 		= `ls -selection -dag`;
+	int $i=0;
+
+	for ( $node in $select )									// process each selection
+	{
+		if ( "camera" == `nodeType $node` )
+		{
+			$shotNameLong = $select[$i-1];
+			$shotNameShort = `substring $shotNameLong 1 6`;
+			
+			// Strip SH from camera then check if valid
+		
+			$shotNumber = tolower ($shotNameShort);
+			$shotNumber = substituteAllString($shotNumber, "sh", "");
+			
+			if (size ($shotNumber) == 4) {
+				if (isValidString ($shotNumber, "([0-9]+)([0-9])*")){
+					print $shotNumber;
+					print " is the shot number.\n";
+				}
+				else {
+					print("Please make sure your camera follows the format shXXXX_description or shXXXX. Please re-run the script again.\n");
+					return;
+				}
+			}
+			else
+			{
+				print("Please make sure your camera follows the format shXXXX_description or shXXXX. Please re-run the script again.\n");
+				return;
+			}
+		}
+		$i++;
+	}
+	
+	// Exit if a camera is not selected
+	if ( size ($shotNameLong) == 0)
+	{
+		print("Please Select a camera. Please re-run the script again.\n");
+		return;
+	}
+	
+	//
+	//
+	//
+	// Manual Over-ride section
+	//
+	//
+	//
+	//
+	
+	
+	string $result = `confirmDialog 
+		-title "spckMakeAepx"
+		-message "Do you required manual override?"
+		-button "YES" -button "NO"
+		-defaultButton "NO" -cancelButton "NO"
+		-dismissString "NO"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "YES") {
+		$manualOverride = 1;
+
+
+		// Creating a dialogue box to request the shot digits.
+		string $result = `promptDialog 
+			-title "spckMakeAepx"
+			-message "Enter Shot Number as XXXX digits:"
+			-button "OK" -button "Cancel"
+			-defaultButton "OK" -cancelButton "Cancel"
+			-dismissString "Cancel"`;
+		
+		// If OK pressed on the dialogue box...
+		if ($result == "OK") {
+		
+			// Query the entry typed by the user and then use it for variable CarAString.
+			$shotNumber = `promptDialog -query -text`;
+			
+			if (size ($shotNumber) == 4) {
+				if (isValidString ($shotNumber, "([0-9]+)([0-9])*")){
+					$shotNameShort = "sh"+$shotNumber;
+				}
+				else {
+					print("Invalid Character. Please re-run the script again.\n");
+					return;
+				}
+			}
+			else {
+					print("Invalid Character. Please re-run the script again.\n");
+					return;
+			}
+		}				  
+		else {
+			print("Please re-run the script again.\n");
+			return;
+		}
+	
+		// Creating a dialogue box to request the shot long name.
+		string $result = `promptDialog 
+			-title "spckMakeAepx"
+			-message "Enter camera as it appears in the render.\ni.e. %c in Render Settings:Image File Output:"
+			-button "OK" -button "Cancel"
+			-defaultButton "OK" -cancelButton "Cancel"
+			-dismissString "Cancel"`;
+		
+		// If OK pressed on the dialogue box...
+		if ($result == "OK") {
+		
+			// Query the entry typed by the user and then use it for variable CarAString.
+			$shotNameLong = `promptDialog -query -text`;
+			
+			if (size ($shotNameLong) == 0) {
+				print("Shot Name must be longer than 0 chaacters. Please re-run the script again.\n");
+				return;
+			}
+		}				  
+		else {
+			print("Please re-run the script again.\n");
+			return;
+		}
+	
+		// Creating a dialogue box to request the scene digits.
+		string $result = `promptDialog 
+			-title "spckMakeAepx"
+			-message "Enter Scene Number as XXXX digits:"
+			-button "OK" -button "Cancel"
+			-defaultButton "OK" -cancelButton "Cancel"
+			-dismissString "Cancel"`;
+		
+		// If OK pressed on the dialogue box...
+		if ($result == "OK") {
+		
+			// Query the entry typed by the user and then use it for variable CarAString.
+			$sceneNumber = `promptDialog -query -text`;
+			
+			if (size ($sceneNumber) == 4) {
+				if (isValidString ($sceneNumber, "([0-9]+)([0-9])*")){
+					$sceneNameShort = "sc"+$sceneNumber;
+				}
+				else {
+					print("Invalid Character. Please re-run the script again.\n");
+					return;
+				}
+			}
+			else {
+					print("Invalid Character. Please re-run the script again.\n");
+					return;
+			}
+		}				  
+		else {
+			print("Please re-run the script again.\n");
+			return;
+		}
+	
+		// Creating a dialogue box to request the scene long name.
+		string $result = `promptDialog 
+			-title "spckMakeAepx"
+			-message "Enter scene name.\ni.e. %s in Render Settings:Image File Output:"
+			-button "OK" -button "Cancel"
+			-defaultButton "OK" -cancelButton "Cancel"
+			-dismissString "Cancel"`;
+		
+		// If OK pressed on the dialogue box...
+		if ($result == "OK") {
+		
+			// Query the entry typed by the user and then use it for variable CarAString.
+			$sceneNameLong = `promptDialog -query -text`;
+			
+			if (size ($sceneNameLong) == 0) {
+				print("Shot Name must be longer than 0 chaacters. Please re-run the script again.\n");
+				return;
+			}
+		}				  
+		else {
+			print("Please re-run the script again.\n");
+			return;
+		}
+	}
+	
+	
+	
+	//
+	// Get scene details
+	//
+	
+	if ( $manualOverride == 0) {
+	
+		$sceneNameLong = `file -shn -q -sn`;
+		$sceneNameLong = substituteAllString($sceneNameLong, ".mb", "");
+		$sceneNameLong = substituteAllString($sceneNameLong, ".ma", "");
+		
+		// Strip SC from scene then check if valid
+		$sceneNameShort = `substring $sceneNameLong 1 6`;
+		$sceneNameShort = tolower ($sceneNameShort);
+		$sceneNumber = substituteAllString($sceneNameShort, "sc", "");
+	
+	}
+		
+	if (size ($sceneNumber) == 4) {
+		if (isValidString ($sceneNumber, "([0-9]+)([0-9])*")){
+			print $sceneNumber;
+			print " is the scene number.\n";
+		}
+		else {
+			print("Please make sure your scene follows the format scXXXX_description or scXXXX. Please re-run the script again.\n");
+			return;
+		}
+	}
+	else
+	{
+		print("Please make sure your scene follows the format scXXXX_description or scXXXX. Please re-run the script again.\n");
+		return;
+	}
+
+
+	$exchangePath 	= $workspacePath+"/_Exchange/";
+	$renderPath 	= $workspacePath+"/Renders/"+$sceneNameLong+"/"+$shotNameLong+"/";
+	
+	print $exchangePath;
+	print " is the exchange path.\n";
+	print $renderPath;
+	print " is the render path.\n";
+
+
+
+
+	//
+	// get render variables
+	//
+	
+	select -r defaultRenderGlobals;
+	
+	$shotWidth 	=  `getAttr  "defaultResolution.width"` ;
+	$shotHeight =  `getAttr  "defaultResolution.height"` ;
+	
+	//
+	// Call Python
+	//
+	
+	//def spckProcessTemplateAepxFile (replacementSceneNumber, replacementShotNumber, camWidth, camHeight, exchangePath, renderPath, renderSceneName, renderCamName):
+	//
+	//eval ($pCMD);
+	//python( "spckProcessTemplateAepxFile ()" );
+	
+	python( "import spckProcessTemplateAepx as sp" );
+	string $pCMD =  "python( \"sp.spckProcessTemplateAepxFile (\'"+ $sceneNumber +"\',\'"+ $shotNumber +"\',"+ $shotWidth +","+ $shotHeight +",\'"+ $exchangePath +"\',\'"+ $renderPath +"\',\'"+ $sceneNameLong +"\',\'"+ $shotNameLong+"\') \" )";
+	print $pCMD;
+	print " is the python command.\n";
+	eval ($pCMD);
+	
+	select -r; //select nothing
+	
+	string $result = `confirmDialog 
+		-title "spckMakeAepx Success!"
+		-message "Your .apex file is in the _exchange folder"
+		-button "OK"
+		-defaultButton "OK"`;
+	print "Complete.\n";
+
+}

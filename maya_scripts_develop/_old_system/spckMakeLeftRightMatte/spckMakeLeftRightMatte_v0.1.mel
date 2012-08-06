@@ -1,0 +1,103 @@
+// spckMakeLeftRightMatte_v0.1.mel
+//
+// By Daniel Harkness
+//
+// Make Left Right Matte
+
+source "spckGetSelectedCar.mel";
+
+global proc spckMakeLeftRightMatte() {
+
+	// Return car name without namespace
+	string $car = spckGetSelectedCar ();	
+	if ( size($car) <= 0 ) {
+		print "Aborted.\n";
+		return;
+	}
+	
+	// Check to see that the node is not a file reference
+    if ( `referenceQuery -isNodeReferenced $car` ) {
+    	confirmDialog -message "You need to rename your car in the original file. A reference cannot be renamed";
+    	print "Aborted.\n";
+		return;
+    }
+
+	string $renderLayerMatteLeftRightSplit 		= $car+"_matteLeftRightSplit";
+
+	// Check to see if render layer exists already
+	if (objExists($renderLayerMatteLeftRightSplit)){
+    	confirmDialog -message "The car may already be setup with a LR split matte";
+    	print "Aborted.\n";
+		return;
+	}
+	
+	
+	// Make the render layer and setup vray overrides
+	
+	createRenderLayer -name $renderLayerMatteLeftRightSplit	 -number 1 -empty;	
+	
+	editRenderLayerGlobals -currentRenderLayer $renderLayerMatteLeftRightSplit;
+
+	string $renderLayerCmd = $renderLayerMatteLeftRightSplit+".renderable";
+	setAttr $renderLayerCmd 0;
+	editRenderLayerAdjustment "vraySettings.giOn";
+	setAttr "vraySettings.giOn" 0;
+	editRenderLayerAdjustment "vraySettings.relements_enableall";
+	setAttr "vraySettings.relements_enableall" 0;
+
+	editRenderLayerGlobals -currentRenderLayer $renderLayerMatteLeftRightSplit;						// Set LR split matte
+				
+	// Make left right surface shader and connect to 3d textureDisplacePlane 
+	shadingNode -n ($car+"_ssMatteGreenLeftRedRight") -asShader surfaceShader;
+	sets -renderable true -noSurfaceShader true -empty -name ($car+"_ssMatteGreenLeftRedRightSG");
+	connectAttr -f ($car+"_ssMatteGreenLeftRedRight.outColor") ($car+"_ssMatteGreenLeftRedRightSG.surfaceShader");
+	
+	
+	shadingNode -n ($car+"_ssMatteGreenLeftRedRight_Projection") -asTexture projection;
+	shadingNode -n ($car+"_ssMatteGreenLeftRedRight_Ramp") -asTexture ramp;
+	shadingNode -n ($car+"_splitCar_place3dTexture") -asUtility place3dTexture;
+	connectAttr ($car+"_splitCar_place3dTexture.wim[0]") ($car+"_ssMatteGreenLeftRedRight_Projection.pm");
+	connectAttr ($car+"_ssMatteGreenLeftRedRight_Ramp.outColor") ($car+"_ssMatteGreenLeftRedRight_Projection.image");
+	shadingNode -n ($car+"_ssMatteGreenLeftRedRight_place2dTexture") -asUtility place2dTexture;
+	connectAttr ($car+"_ssMatteGreenLeftRedRight_place2dTexture.outUV") ($car+"_ssMatteGreenLeftRedRight_Ramp.uv");
+	connectAttr ($car+"_ssMatteGreenLeftRedRight_place2dTexture.outUvFilterSize") ($car+"_ssMatteGreenLeftRedRight_Ramp.uvFilterSize");
+	connectAttr -force ($car+"_ssMatteGreenLeftRedRight_Projection.outColor") ($car+"_ssMatteGreenLeftRedRight.outColor");
+	
+	setAttr ($car+"_ssMatteGreenLeftRedRight_Ramp.interpolation") 0;
+	setAttr ($car+"_ssMatteGreenLeftRedRight_Ramp.type") 1;
+	removeMultiInstance -break true ($car+"_ssMatteGreenLeftRedRight_Ramp.colorEntryList[2]");
+	setAttr ($car+"_ssMatteGreenLeftRedRight_Ramp.colorEntryList[0].color") -type double3 1 0 0 ;
+	setAttr ($car+"_ssMatteGreenLeftRedRight_Ramp.colorEntryList[1].color") -type double3 0 1 0 ;
+	setAttr ($car+"_ssMatteGreenLeftRedRight_Ramp.colorEntryList[1].position") 0.0;
+	setAttr ($car+"_ssMatteGreenLeftRedRight_Ramp.colorEntryList[1].position") 0.5;
+
+
+	parent ($car+"_splitCar_place3dTexture") $car;
+	setAttr ($car+"_splitCar_place3dTexture.scaleX") 200;
+	setAttr ($car+"_splitCar_place3dTexture.scaleY") 300;
+	setAttr ($car+"_splitCar_place3dTexture.scaleZ") 350;
+	move -a -os 0 0 0 ($car+"_splitCar_place3dTexture");
+	rotate -a -os -90 0 0 ($car+"_splitCar_place3dTexture");
+	
+	select -r $car;
+	sets -e -forceElement ($car+"_ssMatteGreenLeftRedRightSG");
+	editRenderLayerMembers -noRecurse $renderLayerMatteLeftRightSplit $car;							//Add car objects
+	
+	select -r ($car+"_ssMatteGreenLeftRedRight");
+	binMembership -add "mattes";
+	binMembership -add "mattesCarSpecific";
+
+		
+	// Give some feedback for next steps
+	
+	select -cl;
+	refresh;
+
+	string $result = `confirmDialog 
+		-title "matteLeftRightSplit Success!"
+		-message ("\n"+$car+" has been split down the middle on matte \"matteLeftRightSplit\"")
+		-button "OK"
+		-defaultButton "OK"`;
+	print "Complete.\n";
+}
+

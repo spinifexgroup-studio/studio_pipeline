@@ -1,0 +1,165 @@
+// spckSetupScene_v0.4.mel
+//
+// By Daniel Harkness
+//
+// Setup scene according to car kit guidelines
+
+
+global proc spckSetupScene() {
+
+	// Set up some variables
+
+	string $scaleCube01 = "scale_refernce_cube_01";
+	string $scaleCube02 = "scale_refernce_cube_02";
+	string $scaleCube03 = "scale_refernce_cube_03";
+	string $scaleCube04 = "scale_refernce_cube_04";
+	string $scaleCube05 = "scale_refernce_cube_05";
+	string $scaleCube06 = "scale_refernce_cube_06";
+	string $scaleCube07 = "scale_refernce_cube_07";
+	string $scaleCube08 = "scale_refernce_cube_08";
+	
+	int $spckDefaultWidth = 1920;
+	int $spckDefaultHeight= 720;
+	
+	string $renderLayerVehicle 				= "vehicle";
+	string $renderLayerBackground 			= "background";
+	string $renderLayerMatteObstruction 	= "matteObstruction";
+	string $renderLayerMatteLightDetails 	= "matteLightDetails";
+	
+	
+	// Check that everything is setup correctly before continuing.
+	
+	string $result = `confirmDialog 
+		-title "spckSetupScene"
+		-message "Have you set up your workspace.mel?\n\nAre your linear units set to centimetres?\n\nAre your time units set to 30fps (for USA)?"
+		-button "YES" -button "NO"
+		-defaultButton "YES" -cancelButton "NO"
+		-dismissString "NO"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "NO") {
+		print("Go setup your workspace and run again.\n");
+		return;
+	}
+
+
+
+	//Loads vray if not yet active
+	
+	if(!`pluginInfo -query -loaded -name "vrayformaya"`) {
+		loadPlugin vrayformaya;
+		pluginInfo -edit -autoload true vrayformaya;
+	}
+	
+	//sets Renderer to vray
+	
+	setAttr "defaultRenderGlobals.currentRenderer" -type "string" "vray";
+	unifiedRenderGlobalsWindow;
+	
+	//Setup some vray attributes:
+	
+	setAttr defaultRenderGlobals.animation 1;
+	setAttr vraySettings.animBatchOnly 1;
+	setAttr vraySettings.vfbOn 1;
+	setAttr vraySettings.imageFormatStr -type "string" "exr";		//sets vray to single channel exr
+	setAttr vraySettings.giOn 1;
+	setAttr vraySettings.relements_separateFolders 1;
+	setAttr defaultResolution.width $spckDefaultWidth;
+	setAttr defaultResolution.height $spckDefaultHeight;
+	vrayAddRenderElement diffuseChannel;
+	vrayAddRenderElement reflectChannel;
+	vrayAddRenderElement refractChannel;
+	vrayAddRenderElement specularChannel;
+	vrayAddRenderElement lightingChannel;
+	vrayAddRenderElement giChannel;
+	vrayAddRenderElement zdepthChannel;
+	vrayAddRenderElement normalsChannel;
+	
+	// Create default layers for car work
+
+	createRenderLayer -name $renderLayerVehicle 				-number 1 -empty;
+	createRenderLayer -name $renderLayerBackground 				-number 1 -empty;
+	createRenderLayer -name $renderLayerMatteObstruction 		-number 1 -empty;
+	createRenderLayer -name $renderLayerMatteLightDetails	 	-number 1 -empty;
+	
+	
+	// Setup Multimattes
+	
+	vrayAddRenderElement MultiMatteElement;
+	rename vrayRE_Multi_Matte "vrayRE_Multi_Matte_Main";
+
+	vrayAddRenderElement MultiMatteElement;
+	rename vrayRE_Multi_Matte "vrayRE_Multi_Matte_Lights";
+	
+	vrayAddRenderElement MultiMatteElement;
+	rename vrayRE_Multi_Matte "vrayRE_Multi_Matte_Parts";
+
+	setAttr -type "string" vrayRE_Multi_Matte_Main.vray_name_multimatte "multimatte_main";
+	setAttr -type "string" vrayRE_Multi_Matte_Lights.vray_name_multimatte "multimatte_lights";
+	setAttr -type "string" vrayRE_Multi_Matte_Parts.vray_name_multimatte "multimatte_parts";
+
+	setAttr "vrayRE_Multi_Matte_Main.vray_redid_multimatte" 0;
+	setAttr "vrayRE_Multi_Matte_Main.vray_greenid_multimatte" 1;
+	setAttr "vrayRE_Multi_Matte_Main.vray_blueid_multimatte" 2;
+	setAttr "vrayRE_Multi_Matte_Main.vray_usematid_multimatte" 1;
+	
+	setAttr "vrayRE_Multi_Matte_Lights.vray_redid_multimatte" 0;
+	setAttr "vrayRE_Multi_Matte_Lights.vray_greenid_multimatte" 1;
+	setAttr "vrayRE_Multi_Matte_Lights.vray_blueid_multimatte" 2;
+	setAttr "vrayRE_Multi_Matte_Lights.vray_usematid_multimatte" 0;
+
+	setAttr "vrayRE_Multi_Matte_Parts.vray_redid_multimatte" 0;
+	setAttr "vrayRE_Multi_Matte_Parts.vray_greenid_multimatte" 1;
+	setAttr "vrayRE_Multi_Matte_Parts.vray_blueid_multimatte" 2;
+	setAttr "vrayRE_Multi_Matte_Parts.vray_usematid_multimatte" 1;
+
+	
+	// Make overrides for matte channels
+
+	editRenderLayerGlobals -currentRenderLayer $renderLayerMatteObstruction;
+	
+	editRenderLayerAdjustment "vraySettings.giOn";
+	setAttr "vraySettings.giOn" 0;
+	editRenderLayerAdjustment "vraySettings.relements_enableall";
+	setAttr "vraySettings.relements_enableall" 0;
+
+
+	editRenderLayerGlobals -currentRenderLayer $renderLayerMatteLightDetails;
+	
+	editRenderLayerAdjustment "vraySettings.giOn";
+	setAttr "vraySettings.giOn" 0;
+	editRenderLayerAdjustment "vraySettings.relements_enableall";
+	setAttr "vraySettings.relements_enableall" 0;
+	
+	//	Close render window, select nothing and return to default render layer 
+	
+	window -e -vis 0 unifiedRenderGlobalsWindow;
+	editRenderLayerGlobals -currentRenderLayer "defaultRenderLayer";
+	select -cl;
+
+	//	set up some scale reference
+
+	polyCube -w 100 -d 100 -h 100 -name $scaleCube01;
+	polyCube -w 100 -d 100 -h 100 -name $scaleCube02;
+	polyCube -w 100 -d 100 -h 100 -name $scaleCube03;
+	polyCube -w 100 -d 100 -h 100 -name $scaleCube04;
+	polyCube -w 100 -d 100 -h 100 -name $scaleCube05;
+	polyCube -w 100 -d 100 -h 100 -name $scaleCube06;
+	polyCube -w 100 -d 100 -h 100 -name $scaleCube07;
+	polyCube -w 100 -d 100 -h 100 -name $scaleCube08;
+	
+	move 	 50 	50 		 150 		$scaleCube01;
+	move 	-50 	50 		 150 		$scaleCube02;
+	move 	 50 	50 		 50 		$scaleCube03;
+	move 	-50 	50 		 50 		$scaleCube04;
+	move 	 50 	50 		-50 		$scaleCube05;
+	move 	-50 	50 		-50 		$scaleCube06;
+	move 	 50 	50 		-150 		$scaleCube07;
+	move 	-50 	50 		-150 		$scaleCube08;
+	
+	group -n "reference_cubes" $scaleCube01 $scaleCube02 $scaleCube03 $scaleCube04 $scaleCube05 $scaleCube06 $scaleCube07 $scaleCube08;
+	
+	annotate -tx "This is a 2x4 set of 1x1m cubes for scale reference.\nAbout equal to the footprint of a car" -p 0 200 0 "reference_cubes";
+	
+	select -cl;
+}

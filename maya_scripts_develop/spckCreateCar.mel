@@ -1,0 +1,362 @@
+// spckCreateCar_v0.8.mel
+//
+// By Michael Grassi
+
+// The following code will create a dialogue box allowing the user
+// to input the name of the car he is working on.
+
+// Names of car parts in strings
+
+global proc spckCreateCar() {
+
+	string $car;
+	
+	string $WheelRear_R 		= "_WheelRear_R";
+	string $WheelRear_L 		= "_WheelRear_L";
+	string $WheelFront_R 		= "_WheelFront_R";
+	string $WheelFront_L 		= "_WheelFront_L";
+	
+	string $BrakeRear_L 		= "_BrakeRear_L";
+	string $BrakeRear_R 		= "_BrakeRear_R";
+	string $BrakeFront_L 		= "_BrakeFront_L";
+	string $BrakeFront_R 		= "_BrakeFront_R";
+	
+	string $Exterior 			= "_Exterior";
+	string $Interior 			= "_Interior";
+	
+	string $Headlight 			= "_Headlight";
+	string $Taillight 			= "_Taillight";
+	string $Foglight 			= "_Foglight";
+	string $Orangelight 		= "_Orangelight";
+	
+	string $Wheels 				= "_Wheels";
+	string $Body 				= "_Body";
+	
+	string $Locators 			= "_Locators";
+	
+	string $TailLight_L 		= "_TailLight_L";
+	string $TailLight_R 		= "_TailLight_R";
+	string $HeadLight_L 		= "_HeadLight_L";
+	string $HeadLight_R			= "_HeadLight_R";
+	string $BrakeLight_L 		= "_BrakeLight_L";
+	string $BrakeLight_R 		= "_BrakeLight_R";
+	string $FogLight_L 			= "_FogLight_L";
+	string $FogLight_R 			= "_FogLight_R";
+	string $FrontContact_L 		= "_FrontContact_L";
+	string $FrontContact_R 		= "_FrontContact_R";
+	string $RearContact_L 		= "_RearContact_L";
+	string $RearContact_R 		= "_RearContact_R";
+	
+	int $shouldProceed			= 0;
+
+	// Check to see that scene is set up correctly first
+	
+	string $select[] 			= `ls`;
+
+	for ( $node in $select )     // process each selection
+	{
+		if ( $node == "vraySettings" )
+		{
+			if ( `getAttr "vraySettings.spckSetupScene"` ) {
+				$shouldProceed = 1;
+			}
+		}
+	}
+
+	if ($shouldProceed == 0){
+		confirmDialog -message "The scene hasn't been set up yet.....\n";
+		return;
+	}
+
+	// Get contents of scene
+	string $selectList[] = `ls`;
+	
+	// Check to see if is a no cars in scene exist
+	for ($item in $selectList) {
+		if ( attributeExists("spckCarRoot",$item)) {
+			confirmDialog -message "A SPCK car already exists in the scene. Create cars individually and use the spckImportCar command to import multiple cars into a scene";
+			print "Aborted.\n";
+			return;
+		}
+	}
+	
+	// Creating a dialogue box to request the car name.
+	string $result = `promptDialog 
+		-title "spckCreateCar"
+		-message "Enter name of car:"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+	
+		// Query the entry typed by the user and then use it for variable CarAString.
+		$car = `promptDialog -query -text`;
+		
+		if (size ($car) <= 0) {
+				confirmDialog -message "The car needs a name length of at least 1 character. Please re-run the script again.\n";
+				return;
+		}
+	}				  
+	else {
+		print("Aborted.\n");
+		return;
+	}
+
+
+	
+	//
+	//
+	// CREATE GROUPS FOR CAR PARTS
+	//
+	//
+	
+	$WheelRear_R 			= $car + $WheelRear_R;
+	$WheelRear_L 			= $car + $WheelRear_L;
+	$WheelFront_R 			= $car + $WheelFront_R;
+	$WheelFront_L 			= $car + $WheelFront_L;
+	$BrakeRear_L 			= $car + $BrakeRear_L;
+	$BrakeRear_R 			= $car + $BrakeRear_R;
+	$BrakeFront_L 			= $car + $BrakeFront_L;
+	$BrakeFront_R 			= $car + $BrakeFront_R;
+	$Exterior 				= $car + $Exterior;
+	$Interior 				= $car + $Interior;
+	$Headlight 				= $car + $Headlight;
+	$Taillight 				= $car + $Taillight;
+	$Foglight 				= $car + $Foglight;
+	$Orangelight 			= $car + $Orangelight;
+	
+	group -em -n $WheelRear_R;
+	group -em -n $WheelRear_L;
+	group -em -n $WheelFront_R;
+	group -em -n $WheelFront_L;
+	group -em -n $BrakeRear_L;
+	group -em -n $BrakeRear_R;
+	group -em -n $BrakeFront_L;
+	group -em -n $BrakeFront_R;
+	group -em -n $Exterior;
+	group -em -n $Interior;
+	group -em -n $Headlight;
+	group -em -n $Taillight;
+	group -em -n $Foglight;
+	group -em -n $Orangelight;
+	
+	//
+	//
+	// CREATE LOCATORS FOR HEADLIGHTS
+	//
+	//
+	
+	$TailLight_L 			= $car + $TailLight_L;
+	$TailLight_R 			= $car + $TailLight_R;
+	$HeadLight_L 			= $car + $HeadLight_L;
+	$HeadLight_R 			= $car + $HeadLight_R;
+	$BrakeLight_L 			= $car + $BrakeLight_L;
+	$BrakeLight_R 			= $car + $BrakeLight_R;
+	$FogLight_L 			= $car + $FogLight_L;
+	$FogLight_R 			= $car + $FogLight_R;
+	$FrontContact_L 		= $car + $FrontContact_L;
+	$FrontContact_R 		= $car + $FrontContact_R;
+	$RearContact_L 			= $car + $RearContact_L;
+	$RearContact_R 			= $car + $RearContact_R;
+	
+	string $locatorArray[] = {
+		$TailLight_L,
+		$TailLight_R,
+		$HeadLight_L,
+		$HeadLight_R,
+		$BrakeLight_L,
+		$BrakeLight_R,
+		$FogLight_L,
+		$FogLight_R,
+		$FrontContact_L,
+		$FrontContact_R,
+		$RearContact_L,
+		$RearContact_R
+	};
+	
+	/*
+	string $annotationArray[] = {
+		"tlL",
+		"tlR",
+		"hlL",
+		"hlR",
+		"blL",
+		"blR",
+		"flL",
+		"flR",
+		"FL",
+		"FR",
+		"RL",
+		"RR"
+	};
+	*/
+	
+	spaceLocator -n $TailLight_L;
+	spaceLocator -n $TailLight_R;
+	spaceLocator -n $HeadLight_L;
+	spaceLocator -n $HeadLight_R;
+	spaceLocator -n $BrakeLight_L;
+	spaceLocator -n $BrakeLight_R;
+	spaceLocator -n $FogLight_L;
+	spaceLocator -n $FogLight_R;
+	spaceLocator -n $FrontContact_L;
+	spaceLocator -n $FrontContact_R;
+	spaceLocator -n $RearContact_L;
+	spaceLocator -n $RearContact_R;
+	
+	move -56 86 -164 	$TailLight_L;
+	move 62 86 -164 	$TailLight_R;
+	move 67 65 180		$HeadLight_L;
+	move -70 65 180		$HeadLight_R;
+	move 59 95 -162		$BrakeLight_L;
+	move -56 95 -162	$BrakeLight_R;
+	move 64 32 196		$FogLight_L;
+	move -69 32 196		$FogLight_R;
+	move 76 0 131		$FrontContact_L;
+	move -74 0 131		$FrontContact_R;
+	move 76 0 -111		$RearContact_L;
+	move -74 0 -111		$RearContact_R;
+	
+	/*
+	for ($i = 0; $i < 12 ; $i++){
+	
+		$node = $locatorArray[$i];
+		$annoText = $annotationArray[$i];
+		$annotationObj = $node+"_annotation";
+		
+		string $localX = $node+".localScaleX";
+		string $localY = $node+".localScaleY";
+		string $localZ = $node+".localScaleZ";
+	
+		setAttr $localX 10;
+		setAttr $localY 10;
+		setAttr $localZ 10;
+		
+		annotate -tx $annoText $node;
+		rename $annotationObj;
+		parent $annotationObj $node;
+		move -a -os 0 0 0 $annotationObj;
+	}
+	*/
+	
+	for ($node in $locatorArray){
+			
+		string $localX = $node+".localScaleX";
+		string $localY = $node+".localScaleY";
+		string $localZ = $node+".localScaleZ";
+	
+		setAttr $localX 10;
+		setAttr $localY 10;
+		setAttr $localZ 10;
+		
+	}
+	
+	//
+	//
+	// CREATE GROUP STRCUTURE
+	//
+	//
+	
+	
+	$Wheels 			= $car + $Wheels;
+	$Body 				= $car + $Body;
+	$Locators 			= $car + $Locators;
+	
+
+	group -n $Wheels $WheelFront_L $WheelFront_R $WheelRear_L $WheelRear_R $BrakeFront_L $BrakeFront_R $BrakeRear_L $BrakeRear_R;
+	group -n $Body $Headlight $Taillight $Foglight $Orangelight $Exterior $Interior;
+	group -n $Locators $TailLight_L $TailLight_R $HeadLight_L $HeadLight_R $BrakeLight_L $BrakeLight_R $FogLight_L $FogLight_R $FrontContact_L $FrontContact_R $RearContact_L $RearContact_R;
+	group -n $car $Wheels $Body $Locators;
+	
+	//
+	//
+	// Add Spck specific attributes
+	//
+	//
+
+	select -r $car;
+	addAttr -ln "spckCarName" -dt "string";
+	addAttr -ln "spckCarRoot" -at bool;
+
+	setAttr -type "string" ($car+".spckCarName") $car;
+	setAttr ($car+".spckCarRoot") 1;
+	
+	//
+	//
+	// Set VRAY IDS for light groups
+	//
+	//
+	
+	
+	vrayAddAttr $Headlight vrayObjectID;
+	vrayAddAttr $Foglight vrayObjectID;
+	vrayAddAttr $Taillight vrayObjectID;
+	vrayAddAttr $Orangelight vrayObjectID;
+	
+	refresh;
+	
+	string $vrayAttribute;	
+	
+	$vrayAttribute = $Headlight+".vrayObjectID";
+	setAttr $vrayAttribute 6;
+	
+	$vrayAttribute = $Foglight+".vrayObjectID";
+	setAttr $vrayAttribute 6;
+	
+	$vrayAttribute = $Taillight+".vrayObjectID";
+	setAttr $vrayAttribute 4;
+	
+	$vrayAttribute = $Orangelight+".vrayObjectID";
+	setAttr $vrayAttribute 5;
+	
+	//
+	//
+	// Create guide for positioning car
+	//
+	//
+	
+	string $wheelGuide = $car+"_wheelGuide";
+	
+	group -n $wheelGuide -em;
+
+	textCurves -n "FR" -ch 0 -f "Arial Bold" -t "FR";
+	scale -a -os 100 100 100 "FRShape";
+	rotate -a -os -90 180 0 "FRShape";
+	move -a -ws -100 0 150 "FRShape";
+	parent "FRShape" $wheelGuide;
+	
+	textCurves -n "FL" -ch 0 -f "Arial Bold" -t "FL";
+	scale -a -os 100 100 100 "FLShape";
+	rotate -a -os -90 180 0 "FLShape";
+	move -a -ws 220 0 150 "FLShape";
+	parent "FLShape" $wheelGuide;
+	
+	textCurves -n "RR" -ch 0 -f "Arial Bold" -t "RR";
+	scale -a -os 100 100 100 "RRShape";
+	rotate -a -os -90 180 0 "RRShape";
+	move -a -ws -100 0 -150 "RRShape";
+	parent "RRShape" $wheelGuide;
+	
+	textCurves -n "RL" -ch 0 -f "Arial Bold" -t "RL";
+	scale -a -os 100 100 100 "RLShape";
+	rotate -a -os -90 180 0 "RLShape";
+	move -a -ws 220 0 -150 "RLShape";
+	parent "RLShape" $wheelGuide;
+
+	
+	select -cl;
+	
+	// Give some feedback for next steps
+	
+	
+	string $result = `confirmDialog 
+		-title "spckCreateCar Success!"
+		-message "\nSuggested next steps:\n\n- Read the maya section of car kit at http://wiki/index.php/motion\n\n- Clean up the car and place the relevant parts in structure you just created."
+		-button "OK"
+		-defaultButton "OK"`;
+	print "Complete.\n";
+
+
+}

@@ -1,0 +1,96 @@
+// spckRenameCar_v0.2.mel
+//
+// By Daniel Harkness
+
+// The following code will create a dialogue box allowing the user
+// to input the name of the car he is working on.
+
+
+source "spckGetSelectedCar.mel";
+
+
+// Names of car parts in strings
+
+
+global proc spckRenameCar() {
+
+	// Return car name without namespace
+	string $car = spckGetSelectedCar ();	
+	if ( size($car) <= 0 ) {
+		print "Aborted.\n";
+		return;
+	}
+	
+	
+	// Check to see that the node is not a file reference
+    if ( `referenceQuery -isNodeReferenced $car` ) {
+    	confirmDialog -message "You need to rename your car in the original file. A reference cannot be renamed";
+    	print "Aborted.\n";
+		return;
+    }
+
+
+	// Creating a dialogue box to request the car name destination.
+	string $CarDestination;
+
+	string $result = `promptDialog 
+		-title "spckRenameCar"
+		-message "Enter new name for car:"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+	
+		// Query the entry typed by the user and then use it for variable CarAString.
+		$CarDestination = `promptDialog -query -text`;
+		
+		if (size ($CarDestination) <= 0) {
+			confirmDialog -message "The car needs a name length of at least 1 character. Please re-run the script again.\n";
+			print "Aborted.\n";
+			return;
+		}
+	}
+	
+	//
+	//
+	// Iterate through all objects and rename
+	//
+	//
+	
+	//Rename Root car name
+	string $CarSource = $car;
+	setAttr ($CarSource+".spckCarName") -type "string" $CarDestination;
+
+	
+	// Rename Shapes
+	string $allObjects[];
+	string $obj;
+	$allObjects = `ls -dag -shapes`;
+	for ( $obj in $allObjects ) {
+		if (startsWith($obj, $CarSource)) {
+			string $destObj = substituteAllString( $obj , $CarSource , $CarDestination);
+			rename $obj $destObj;
+		}
+	}
+
+	//Rename Transforms
+	$allObjects = `ls -dag`;
+	for ( $obj in $allObjects ) {
+		if (startsWith($obj, $CarSource)) {
+			string $destObj = substituteAllString( $obj , $CarSource , $CarDestination);
+			rename $obj $destObj;
+		}
+	}
+
+	
+	select -cl;
+	
+	// Give some feedback for next steps
+	
+	string $message = "\n"+$CarSource+" is now "+$CarDestination+".";
+	
+	confirmDialog -message $message;
+	print "Complete.\n";
+}

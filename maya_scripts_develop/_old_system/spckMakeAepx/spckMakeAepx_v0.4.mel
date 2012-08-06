@@ -1,0 +1,161 @@
+// spckMakeAepx
+//
+// By Daniel Harkness
+
+// The following code will create a dialogue box allowing the user
+// to input the name of the car he is working on.
+
+// Names of car parts in strings
+
+global proc spckMakeAepx() {
+
+
+	//
+	// Declare Default Variables
+	//
+	
+	string $shotNumber		= "0000";
+	string $shotName		= "Template";
+	float  $shotWidth		= "1920";
+	float  $shotHeight		= "720";
+	string $workspacePath	= `workspace -o -q rd`;
+	string $cameraName		= "";
+	string $exchangePath 	= "";
+	string $renderPath 		= "";
+
+
+	//
+	// Generate Paths
+	// Make sure camera is selected
+	//
+	
+	string $select[] 		= `ls -selection -dag`;
+	int $i=0;
+
+	for ( $node in $select )     // process each selection
+	{
+		if ( "camera" == `nodeType $node` )
+		{
+			$cameraName = $select[$i-1];
+			$cameraName = substituteAllString($cameraName, " ", "_");
+			print $cameraName;
+			print " is the camera name.\n";
+		}
+		$i++;
+	}
+	
+	// Exit if camera is not selected
+	if ( size ($cameraName) == 0)
+	{
+		print("Please Select a camera. Please re-run the script again.\n");
+		return;
+	}
+
+	string $sceneName = `file -shn -q -sn`;
+	$sceneName = substituteAllString($sceneName, ".mb", "");
+	$sceneName = substituteAllString($sceneName, ".ma", "");
+
+	$exchangePath 	= $workspacePath+"/_Exchange/";
+	$renderPath 	= $workspacePath+"/Renders/"+$sceneName+"/"+$cameraName+"/";
+	
+	print $exchangePath;
+	print " is the exchange path.\n";
+	print $renderPath;
+	print " is the render path.\n";
+
+
+
+
+	//
+	// get render variables
+	//
+	
+	select -r defaultRenderGlobals;
+	
+	$shotWidth 	=  `getAttr  "defaultResolution.width"` ;
+	$shotHeight =  `getAttr  "defaultResolution.height"` ;
+
+
+	//
+	// Creating a dialogue box to request the shot number.
+	//
+	
+	
+	string $result = `promptDialog 
+		-title "spckMakeAepx"
+		-message "Enter Shot Number - 4 digits:"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+	
+		// Query the entry typed by the user and then use it for variable CarAString.
+		$shotNumber = `promptDialog -query -text`;
+		
+		if (size ($shotNumber) == 4) {
+			if (isValidString ($shotNumber, "([0-9]+)([0-9])*")){
+				print $shotNumber;
+				print " is the shot number.\n";
+			}
+			else {
+				print("Invalid Characters. Please re-run the script again.\n");
+				return;
+			}
+		}
+		else {
+				print("Invalid Shot Length. Please re-run the script again.\n");
+				return;
+		}
+	}				  
+	else {
+		print("Please re-run the script again.\n");
+		return;
+	}
+
+
+
+	//
+	// Creating a dialogue box to request the shot name.
+	//
+	
+	
+	string $result = `promptDialog 
+		-title "spckmakeAepx"
+		-message "Enter Shot Description - This is for filename:"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+	
+		// Query the entry typed by the user and then use it for variable CarAString.
+		$shotName = `promptDialog -query -text`;
+		
+		if (size ($shotNumber) == 0) {
+				print("Shot Name needs a length of greater than 0. Please re-run the script again.\n");
+				return;
+		}
+	}				  
+	else {
+		print("Please re-run the script again.\n");
+		return;
+	}
+	
+	//
+	// Call Python
+	//
+	
+	//def spckProcessTemplateAepxFile (replacementShotNumber, replacementShotName, camWidth, camHeight, exchangePath, renderPath, camName):
+	//
+	//eval ($pCMD);
+	//python( "spckProcessTemplateAepxFile ()" );
+	
+	python( "import spckProcessTemplateAepx" );
+	string $pCMD =  "python( \"spckProcessTemplateAepxFile (\'"+ $shotNumber +"\',\'"+ $shotName +"\',"+ $shotWidth +","+ $shotHeight +",\'"+ $exchangePath +"\',\'"+ $renderPath +"\',\'"+ $cameraName+"\') \" )";
+	print $pCMD;
+	print " is the python command.\n";
+	eval ($pCMD);
+}

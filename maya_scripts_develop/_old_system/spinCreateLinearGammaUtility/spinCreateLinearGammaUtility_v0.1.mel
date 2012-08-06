@@ -1,0 +1,26 @@
+// spinCreateLinearGammaUtility_v0.3.mel
+//
+// By Daniel Harkness
+//
+// Makes a linear gamma utility of supplied name
+
+
+
+//
+//
+// Add all materials
+//
+//
+
+global proc spinCreateLinearGammaUtility ( string $utilityName ) {
+	if (objExists ($utilityName)) {
+		print "Can't create linear gamma utility. Node already exists";
+		return;
+	}
+
+	float $gammaCorrection = 1.0/2.2;
+	shadingNode -asUtility -n $utilityName gammaCorrect;
+	setAttr ($utilityName+".gamma") $gammaCorrection $gammaCorrection $gammaCorrection;
+}
+
+

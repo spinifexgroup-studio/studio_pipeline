@@ -1,0 +1,135 @@
+// spckRenameCar_v0.1.mel
+//
+// By Daniel Harkness
+
+// The following code will create a dialogue box allowing the user
+// to input the name of the car he is working on.
+
+// Names of car parts in strings
+
+global proc spckRenameCar() {
+
+	string $CarSource 			= "CarY";
+	string $CarDestination		= "CarZ";
+	
+	int $shouldProceed			= 0;
+
+	// Creating a dialogue box to request the car name.
+	string $result = `promptDialog 
+		-title "spckAddCar"
+		-message "Enter Letter of car to rename:"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+	
+		// Query the entry typed by the user and then use it for variable CarAString.
+		$CarSource = `promptDialog -query -text`;
+		
+		if (size ($CarSource) == 1) {
+			if (isValidString ($CarSource, "([a-zA-Z]+)([a-zA-Z])*")){
+				$CarSource = toupper ($CarSource);
+				$CarSource = "Car"+$CarSource;
+				if ( !`objExists $CarSource`){
+					print("That car doesn't exist.\n");
+					return;
+				}
+			}
+			else{
+				print("Invalid Character. Please re-run the script again.\n"); return;
+			}
+		}
+		else{
+			print("Invalid Character. Please re-run the script again.\n"); return;
+		}
+	}				  
+	else {
+		print("Please re-run the script again.\n"); return;
+	}
+
+	// Creating a dialogue box to request the car name destination.
+	string $result = `promptDialog 
+		-title "spckAddCar"
+		-message "Enter new letter of car:"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+	
+		// Query the entry typed by the user and then use it for variable CarAString.
+		$CarDestination = `promptDialog -query -text`;
+		
+		if (size ($CarDestination) == 1) {
+			if (isValidString ($CarDestination, "([a-zA-Z]+)([a-zA-Z])*")){
+				$CarDestination = toupper ($CarDestination);
+				$CarDestination = "Car"+$CarDestination;
+				if ( `objExists $CarDestination`){
+					print("That car already exist.\n");
+					return;
+				}
+				else if ($CarSource == $CarDestination ){
+					print("The letters are the same.\n");
+					return;
+				}
+			}
+			else{
+				print("Invalid Character. Please re-run the script again.\n"); return;
+			}
+		}
+		else{
+			print("Invalid Character. Please re-run the script again.\n"); return;
+		}
+	}				  
+	else {
+		print("Please re-run the script again.\n"); return;
+	}
+	
+	//
+	//
+	// Iterate through all objects and rename
+	//
+	//
+	
+	string  $allObjects[];
+	string  $obj;
+	$allObjects = `ls -dag -shapes`;
+	for ( $obj in $allObjects ) {
+	print $obj;
+	print "\n";
+		if (startsWith($obj, $CarSource)) {
+			print "Renaming to ";
+			string $destObj = substituteAllString( $obj , $CarSource , $CarDestination);
+			rename $obj $destObj;
+		}
+	}
+
+	$allObjects = `ls -dag`;
+	for ( $obj in $allObjects ) {
+	print $obj;
+	print "\n";
+		if (startsWith($obj, $CarSource)) {
+			print "Renaming to ";
+			string $destObj = substituteAllString( $obj , $CarSource , $CarDestination);
+			rename $obj $destObj;
+		}
+	}
+
+
+	
+	select -cl;
+	
+	// Give some feedback for next steps
+	
+	string $message = "\n"+$CarSource+" is now "+$CarDestination+".";
+	
+	string $result = `confirmDialog 
+		-title "spckRenameCar Success!"
+		-message $message
+		-button "OK"
+		-defaultButton "OK"`;
+	print "Complete.\n";
+}

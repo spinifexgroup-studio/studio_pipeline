@@ -1,0 +1,283 @@
+// spckBakeLocators
+//
+// By Daniel Harkness
+
+// The following code will create a dialogue box allowing the user
+// to input the name of the car he is working on.
+
+source "spckGetSelectedCar.mel";
+
+// Names of car parts in strings
+
+global proc spckBakeLocators() {
+
+	
+	// Return car name without namespace
+	string $nsCar = spckGetSelectedCar ();	
+	if ( size($nsCar) <= 0 ) {
+		print "Aborted.\n";
+		return;
+	}
+	
+	string $buffer[] ;  
+	tokenize $nsCar ":" $buffer ;  
+	string $car = $buffer[size($buffer)-1] ;  
+
+
+	// Check to see if teh baked locators already exists
+	string $Locators 	= $car+"_BakedLocators";
+
+	if ( `objExists $Locators` ) {
+		confirmDialog -message "The baked locators already exists. Remove or rename the old group and try again.";
+		print "Aborted.\n";
+		return;
+	}
+	
+	
+	// Get Bake Range.
+	
+	string $bakeFirst;
+	string $bakeLast;
+	string $bakeRange;
+
+	string $result = `promptDialog 
+		-title "Bake Range Start"
+		-message "Enter start baking frame:"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+		$bakeFirst = `promptDialog -query -text`;
+	}				  
+	else {
+		print "Aborted.\n";
+		return;
+	}
+
+	string $result = `promptDialog 
+		-title "Bake Range End"
+		-message "Enter end baking frame:"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+		$bakeLast = `promptDialog -query -text`;
+	}				  
+	else {
+		print "Aborted.\n";
+		return;
+	}
+
+	string $bakeRange			= $bakeFirst+":"+$bakeLast;
+
+	// Go through selection and do only to cameras
+	// Duplicate Camera and bake
+	
+	
+	//
+	//
+	// CREATE LOCATORS FOR HEADLIGHTS
+	//
+	//
+	
+	string $TailLight_L 		= "_TailLight_L";
+	string $TailLight_R 		= "_TailLight_R";
+	string $HeadLight_L 		= "_HeadLight_L";
+	string $HeadLight_R			= "_HeadLight_R";
+	string $BrakeLight_L 		= "_BrakeLight_L";
+	string $BrakeLight_R 		= "_BrakeLight_R";
+	string $FogLight_L 			= "_FogLight_L";
+	string $FogLight_R 			= "_FogLight_R";
+	string $FrontContact_L 		= "_FrontContact_L";
+	string $FrontContact_R 		= "_FrontContact_R";
+	string $RearContact_L 		= "_RearContact_L";
+	string $RearContact_R 		= "_RearContact_R";
+
+	string $appendNull = "null_";
+	
+	string $TailLight_L_new 		= $appendNull + $car + $TailLight_L;
+	string $TailLight_R_new 		= $appendNull + $car + $TailLight_R;
+	string $HeadLight_L_new 		= $appendNull + $car + $HeadLight_L;
+	string $HeadLight_R_new 		= $appendNull + $car + $HeadLight_R;
+	string $BrakeLight_L_new 		= $appendNull + $car + $BrakeLight_L;
+	string $BrakeLight_R_new 		= $appendNull + $car + $BrakeLight_R;
+	string $FogLight_L_new 			= $appendNull + $car + $FogLight_L;
+	string $FogLight_R_new 			= $appendNull + $car + $FogLight_R;
+	string $FrontContact_L_new 		= $appendNull + $car + $FrontContact_L;
+	string $FrontContact_R_new 		= $appendNull + $car + $FrontContact_R;
+	string $RearContact_L_new 		= $appendNull + $car + $RearContact_L;
+	string $RearContact_R_new 		= $appendNull + $car + $RearContact_R;
+	
+	$TailLight_L 			= $nsCar + $TailLight_L;
+	$TailLight_R 			= $nsCar + $TailLight_R;
+	$HeadLight_L 			= $nsCar + $HeadLight_L;
+	$HeadLight_R 			= $nsCar + $HeadLight_R;
+	$BrakeLight_L 			= $nsCar + $BrakeLight_L;
+	$BrakeLight_R 			= $nsCar + $BrakeLight_R;
+	$FogLight_L 			= $nsCar + $FogLight_L;
+	$FogLight_R 			= $nsCar + $FogLight_R;
+	$FrontContact_L 		= $nsCar + $FrontContact_L;
+	$FrontContact_R 		= $nsCar + $FrontContact_R;
+	$RearContact_L 			= $nsCar + $RearContact_L;
+	$RearContact_R 			= $nsCar + $RearContact_R;
+	
+	
+	spaceLocator -n $TailLight_L_new;
+	spaceLocator -n $TailLight_R_new;
+	spaceLocator -n $HeadLight_L_new;
+	spaceLocator -n $HeadLight_R_new;	
+	spaceLocator -n $BrakeLight_L_new;
+	spaceLocator -n $BrakeLight_R_new;
+	spaceLocator -n $FogLight_L_new;
+	spaceLocator -n $FogLight_R_new;
+	spaceLocator -n $FrontContact_L_new;
+	spaceLocator -n $FrontContact_R_new;
+	spaceLocator -n $RearContact_L_new;
+	spaceLocator -n $RearContact_R_new;
+	
+	
+	//
+	//
+	// CONSTRAIN NEW TO OLD
+	//
+	//
+	
+	select -r $TailLight_L;
+	select -add $TailLight_L_new;
+	doCreateParentConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	parentConstraint - weight 1;
+	
+	select -r $TailLight_R;
+	select -add $TailLight_R_new;
+	doCreateParentConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	parentConstraint - weight 1;
+	
+	select -r $HeadLight_L;
+	select -add $HeadLight_L_new;
+	doCreateParentConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	parentConstraint - weight 1;
+	
+	select -r $HeadLight_R;
+	select -add $HeadLight_R_new;
+	doCreateParentConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	parentConstraint - weight 1;
+	
+	select -r $BrakeLight_L;
+	select -add $BrakeLight_L_new;
+	doCreateParentConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	parentConstraint - weight 1;
+	
+	select -r $BrakeLight_R;
+	select -add $BrakeLight_R_new;
+	doCreateParentConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	parentConstraint - weight 1;
+	
+	select -r $FogLight_L;
+	select -add $FogLight_L_new;
+	doCreateParentConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	parentConstraint - weight 1;
+	
+	select -r $FogLight_R;
+	select -add $FogLight_R_new;
+	doCreateParentConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	parentConstraint - weight 1;
+	
+	select -r $BrakeLight_L;
+	select -add $BrakeLight_L_new;
+	doCreateParentConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	parentConstraint - weight 1;
+	
+	select -r $BrakeLight_R;
+	select -add $BrakeLight_R_new;
+	doCreateParentConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	parentConstraint - weight 1;
+	
+	select -r $FrontContact_L;
+	select -add $FrontContact_L_new;
+	doCreateParentConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	parentConstraint - weight 1;
+	
+	select -r $FrontContact_R;
+	select -add $FrontContact_R_new;
+	doCreateParentConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	parentConstraint - weight 1;
+	
+	select -r $RearContact_L;
+	select -add $RearContact_L_new;
+	doCreateParentConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	parentConstraint - weight 1;
+	
+	select -r $RearContact_R;
+	select -add $RearContact_R_new;
+	doCreateParentConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	parentConstraint - weight 1;
+	
+	bakeResults -simulation true -t $bakeRange -sampleBy 1 -disableImplicitControl true -preserveOutsideKeys true -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -bakeOnOverrideLayer false -controlPoints false -shape true
+		{	
+			$TailLight_L_new,
+			$TailLight_R_new,
+			$HeadLight_L_new,
+			$HeadLight_R_new,
+			$BrakeLight_L_new,
+			$BrakeLight_R_new,
+			$FogLight_L_new,
+			$FogLight_R_new,
+			$FrontContact_L_new,
+			$FrontContact_R_new,
+			$RearContact_L_new,
+			$RearContact_R_new
+		};
+	
+	group -n $Locators
+		{	
+			$TailLight_L_new,
+			$TailLight_R_new,
+			$HeadLight_L_new,
+			$HeadLight_R_new,
+			$BrakeLight_L_new,
+			$BrakeLight_R_new,
+			$FogLight_L_new,
+			$FogLight_R_new,
+			$FrontContact_L_new,
+			$FrontContact_R_new,
+			$RearContact_L_new,
+			$RearContact_R_new
+		};
+			
+		string $locatorArray[] = {
+		$TailLight_L_new,
+		$TailLight_R_new,
+		$HeadLight_L_new,
+		$HeadLight_R_new,
+		$BrakeLight_L_new,
+		$BrakeLight_R_new,
+		$FogLight_L_new,
+		$FogLight_R_new,
+		$FrontContact_L_new,
+		$FrontContact_R_new,
+		$RearContact_L_new,
+		$RearContact_R_new
+	};
+	
+	for ($node in $locatorArray){
+	
+		string $localX = $node+".localScaleX";
+		string $localY = $node+".localScaleY";
+		string $localZ = $node+".localScaleZ";
+	
+		setAttr $localX 10;
+		setAttr $localY 10;
+		setAttr $localZ 10;
+		
+		string $parentContraint = $node+"_parentConstraint1";
+		delete $parentContraint;
+	}
+	
+	// Check we only have one item selected
+	confirmDialog -message ("The locators for "+$car+" have been baked.");
+	print "Complete.\n";
+}

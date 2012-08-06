@@ -1,0 +1,46 @@
+// spckGetSelectedCar
+//
+// By Daniel Harkness
+
+// The following code will create a dialogue box allowing the user
+// to input the name of the car he is working on.
+
+// Names of car parts in strings
+
+global proc string spckGetSelectedCar() {
+
+	// Get contents of selected items
+	string $selectList[] = `ls -sl`;
+	
+	// Check we only have one item selected
+	if (size($selectList) > 1) {
+		confirmDialog -message "Select only one item in the outliner";
+		print "Aborted.\n";
+		return "";
+	}
+	// Check we only have one item selected
+	if (size($selectList) < 1) {
+		confirmDialog -message "You need to select something in the outliner";
+		print "Aborted.\n";
+		return "";
+	}
+
+	// Check to see if is a spckCar
+	
+	string $select = $selectList[0];
+		
+	if ( attributeExists("spckCarRoot",$select)) {
+		if ( !`getAttr ($select+".spckCarRoot")` ) {
+			confirmDialog -message "You need to select a valid SPCK car root.";
+			print "Aborted.\n";
+			return "";
+		}
+	}
+	else {
+		confirmDialog -message "You need to select a valid SPCK car.";
+		print "Aborted.\n";
+		return "";
+	}
+	
+	return $select;
+}

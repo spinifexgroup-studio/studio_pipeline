@@ -1,0 +1,61 @@
+// spinDuplicateAndBakeCamera
+//
+// By Daniel Harkness
+
+// The following code will create a dialogue box allowing the user
+// to input the name of the car he is working on.
+
+// Names of car parts in strings
+
+global proc spinDuplicateAndBakeCamera() {
+	
+	string $select[] = `ls -selection -dag -leaf`;
+	string $bakeRange			= "1:1000";
+
+
+	// Get Bake Range.
+	string $result = `promptDialog 
+		-title "Car Initialisation"
+		-message "Enter Bake Range (as first:last):"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+		$bakeRange = `promptDialog -query -text`;
+	}				  
+	else {
+		print("Please re-run the script again.\n");
+	}
+
+	// Go through selection and do only to cameras
+	// Duplicate Camera and bake
+
+	for ( $node in $select )     // process each selection
+	{
+		if ( "camera" == `nodeType $node` )
+		{
+			string $newCamera = "tempCamera";
+			
+			duplicate -n $newCamera $node;
+			
+			parent -world $newCamera;
+			
+			// CONSTRAIN NEW TO OLD
+			select -r $node;
+			select -add $newCamera;
+			doCreateParentConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+			parentConstraint -weight 1;
+
+			bakeResults -simulation true -t $bakeRange -sampleBy 1 -disableImplicitControl true -preserveOutsideKeys true -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -bakeOnOverrideLayer false -controlPoints false -shape true
+				{	
+					$newCamera
+				};
+				
+			string $finalCamera = $node + "_baked";
+			rename $newCamera $finalCamera;
+		}
+	}
+	
+}

@@ -1,0 +1,72 @@
+// spckCreateShadingRig_v0.1.mel
+//
+// By Daniel Harkness
+//
+// Setup scene according to car kit guidelines
+
+
+
+//
+//
+// Make A rig to help with shading cars
+//
+//
+
+global proc spckCreateShadingRig() {
+
+	$rig			= "spckShadingRig";
+	$floor  		= "ssrFloor";
+	$vrAreaLight 	= "ssrBigVrayAreaLight";
+	$sphere			= "ssrSphere";
+	
+	if (objExists($rig)) {
+		confirmDialog -message "A SPCK shading rig already exists in the scene.";
+		print "Aborted.\n";
+		return;
+	}
+
+	// Make a floor
+	polyPlane -name $floor -ch on -o on -w 10000 -h 10000 -sw 1 -sh 1 -cuv 2 ;
+	
+	// Make some spheres
+	
+	polySphere -n ($sphere+"1") -ch on -o on -r 50 ;
+	polySphere -n ($sphere+"2") -ch on -o on -r 50 ;
+	polySphere -n ($sphere+"3") -ch on -o on -r 50 ;
+	
+	move -a 0 50 150 ($sphere+"1");
+	move -a 0 50 0 ($sphere+"2");
+	move -a 0 50 -150 ($sphere+"3");
+
+	// Make Area Light for basic stuff
+	createNode "transform" -n $vrAreaLight;
+	shadingNode -name ($vrAreaLight+"Shape") -asLight VRayLightRectShape -parent $vrAreaLight;
+	setAttr ($vrAreaLight+".rotateX") -90;
+	setAttr ($vrAreaLight+".translateY") 800;
+	setAttr ($vrAreaLight+"Shape.uSize") 400;
+	setAttr ($vrAreaLight+"Shape.vSize") 400;
+	setAttr ($vrAreaLight+"Shape.invisible") 1;
+	
+	setAttr ($vrAreaLight+"Shape.units") 3;
+	setAttr ($vrAreaLight+"Shape.intensityMult") 1000;
+
+	
+	
+	// Group everything
+	group -name $rig $vrAreaLight $floor ($sphere+"1") ($sphere+"2") ($sphere+"3");
+	
+	// Add some attributes
+	
+	addAttr -ln "BigAreaLight" -at bool $rig;
+	setAttr -e-keyable true ($rig+".BigAreaLight");
+
+	addAttr -ln "StudioLight" -at bool $rig;
+	setAttr -e-keyable true ($rig+".StudioLight");
+
+	addAttr -ln "DayLight" -at bool $rig;
+	setAttr -e-keyable true ($rig+".DayLight");
+
+	addAttr -ln "RimLight" -at bool $rig;
+	setAttr -e-keyable true ($rig+".RimLight");
+}
+

@@ -1,0 +1,661 @@
+// spckRigCar_v0.2.mel
+//
+// By Daniel Harkness
+
+
+// Rig Car
+
+global proc spckRigCar() {
+
+	string $Car		 			= "CarX";
+	string $WheelRear_R 		= "_WheelRear_R";
+	string $WheelRear_L 		= "_WheelRear_L";
+	string $WheelFront_R 		= "_WheelFront_R";
+	string $WheelFront_L 		= "_WheelFront_L";
+	string $BrakeRear_L 		= "_BrakeRear_L";
+	string $BrakeRear_R 		= "_BrakeRear_R";
+	string $BrakeFront_L 		= "_BrakeFront_L";
+	string $BrakeFront_R 		= "_BrakeFront_R";
+	string $Wheels 				= "_Wheels";
+	string $WheelsRear 			= "_WheelsRear";
+	string $WheelsFront 		= "_WheelsFront";
+	string $Body 				= "_Body";
+	string $FrontContact_L 		= "_FrontContact_L";
+	string $FrontContact_R 		= "_FrontContact_R";
+	string $RearContact_L 		= "_RearContact_L";
+	string $RearContact_R 		= "_RearContact_R";
+	
+	int $tempRand				= `rand 100000`;
+	string $tempName			= "_temp_"+$tempRand;
+	
+	int $shouldProceed			= 0;
+
+	// Creating a dialogue box to request the car name.
+	string $result = `promptDialog 
+		-title "spckAddCar"
+		-message "Enter Letter of car to rig:"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+	
+		// Query the entry typed by the user and then use it for variable CarAString.
+		$Car = `promptDialog -query -text`;
+		
+		if (size ($Car) == 1) {
+			if (isValidString ($Car, "([a-zA-Z]+)([a-zA-Z])*")){
+				$Car = toupper ($Car);
+				$Car = "Car"+$Car;
+				if ( !`objExists $Car`){
+					print("That car doesn't exist.\n");
+					return;
+				}
+			}
+			else{
+				print("Invalid Character. Please re-run the script again.\n"); return;
+			}
+		}
+		else{
+			print("Invalid Character. Please re-run the script again.\n"); return;
+		}
+	}				  
+	else {
+		print("Please re-run the script again.\n"); return;
+	}
+
+	//
+	//
+	//
+	// Start rigging Car
+	//
+	//
+	//
+	
+	select -cl;
+
+	float $bounds[];
+	float $sizeBounds[];
+	string $selectItem;
+	string $selectBrakes;
+	string $selectedGroup;
+	string $select[];
+	float $pivotX;
+	float $pivotY;
+	float $pivotZ;
+	
+	//
+	// ===================================================================================
+	// ====================== Wheels =====================================================
+	// ===================================================================================
+	//
+	
+	string $wheelList[] = { ($Car + $WheelRear_L),
+							($Car + $WheelRear_R),
+							($Car + $WheelFront_L),
+							($Car + $WheelFront_R)
+							};
+							
+	string $brakeList[] = { ($Car + $BrakeRear_L),
+							($Car + $BrakeRear_R),
+							($Car + $BrakeFront_L),
+							($Car + $BrakeFront_R)
+							};
+	
+	//
+	// Iterate through each wheel - clean up and set axis
+	//
+	
+	for ( $i=0 ; $i < 4 ;$i++ ) {
+	
+		string $wheel = $wheelList[$i];
+		string $brake = $brakeList[$i];
+		
+		$selectedGroup = `select -r $wheel`;
+		$select = `ls -sl`;
+		
+		$bounds = getAnimatedBoundsForMeshes( $select );
+		
+		//Centre pivots on wheel and match brake prior to aligning
+		
+		$pivotX = ($bounds[0]+$bounds[3])/2;
+		$pivotY = ($bounds[1]+$bounds[4])/2;
+		$pivotZ = ($bounds[2]+$bounds[5])/2;
+		move -a -os $pivotX $pivotY $pivotZ ($wheel+".scalePivot") ($wheel+".rotatePivot");
+		move -a -ws $pivotX $pivotY $pivotZ ($brake+".scalePivot") ($brake+".rotatePivot");
+		
+		// Constrain brake to wheel first before adjusting then unconstrain
+		
+		parent $brake $wheel;
+		spckAlignWheel ($wheel);
+		
+		parent $brake ($Car+$Wheels);
+		
+		
+		//Move pivots to wheel interior
+		$bounds = getAnimatedBoundsForMeshes( $select );
+
+		if ( $i == 0 || $i == 2){		//Left Items
+			$pivotX = $bounds[0];
+		}
+		else {							//Right Items
+			$pivotX = $bounds[3];
+		}		
+		$pivotY = ($bounds[1]+$bounds[4])/2;
+		$pivotZ = ($bounds[2]+$bounds[5])/2;
+		move -a -os $pivotX $pivotY $pivotZ ($wheel+".scalePivot") ($wheel+".rotatePivot");
+		move -a -os $pivotX $pivotY $pivotZ ($brake+".scalePivot") ($brake+".rotatePivot");
+	}
+	
+	
+	//
+	// ===================================================================================
+	// ====================== Wheel ALign ================================================
+	// ===================================================================================
+	//
+	
+	float $rearBoundsL[];
+	float $rearBoundsR[];
+	float $moveZL;
+	float $moveZR;
+	
+	//
+	// Align rear wheels
+	//
+	
+	$selectedGroup = `select -r ($Car + $WheelRear_L)`;
+	$select = `ls -sl`;
+	$rearBoundsL = getAnimatedBoundsForMeshes( $select );
+
+	$selectedGroup = `select -r ($Car + $WheelRear_R)`;
+	$select = `ls -sl`;
+	$rearBoundsR = getAnimatedBoundsForMeshes( $select );
+	
+	$moveZL = ( (($rearBoundsR[2]+$rearBoundsR[5])/2) - (($rearBoundsL[2]+$rearBoundsL[5])/2) )/2;
+	$moveZR = ( (($rearBoundsL[2]+$rearBoundsL[5])/2) - (($rearBoundsR[2]+$rearBoundsR[5])/2) )/2;
+
+	move -r -os -wd 0 0 $moveZL ($Car + $WheelRear_L);
+	move -r -os -wd  0 0 $moveZL ($Car + $BrakeRear_L);
+
+	move -r -os -wd  0 0 $moveZR ($Car + $WheelRear_R);
+	move -r -os -wd  0 0 $moveZR ($Car + $BrakeRear_R);
+	
+	
+	$selectedGroup = `select -r ($Car + $WheelRear_L)`;
+	$select = `ls -sl`;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the wheels
+
+	$selectedGroup = `select -r ($Car + $WheelRear_R)`;
+	$select = `ls -sl`;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the wheels
+
+	$selectedGroup = `select -r ($Car + $BrakeRear_L)`;
+	$select = `ls -sl`;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the brake
+
+	$selectedGroup = `select -r ($Car + $BrakeRear_L)`;
+	$select = `ls -sl`;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the brake
+
+
+	//
+	// Align front wheels
+	//
+	
+	$selectedGroup = `select -r ($Car + $WheelFront_L)`;
+	$select = `ls -sl`;
+	$FrontBoundsL = getAnimatedBoundsForMeshes( $select );
+
+	$selectedGroup = `select -r ($Car + $WheelFront_R)`;
+	$select = `ls -sl`;
+	$FrontBoundsR = getAnimatedBoundsForMeshes( $select );
+	
+	$moveZL = ( (($FrontBoundsR[2]+$FrontBoundsR[5])/2) - (($FrontBoundsL[2]+$FrontBoundsL[5])/2) )/2;
+	$moveZR = ( (($FrontBoundsL[2]+$FrontBoundsL[5])/2) - (($FrontBoundsR[2]+$FrontBoundsR[5])/2) )/2;
+
+	move -r -os -wd 0 0 $moveZL ($Car + $WheelFront_L);
+	move -r -os -wd  0 0 $moveZL ($Car + $BrakeFront_L);
+
+	move -r -os -wd  0 0 $moveZR ($Car + $WheelFront_R);
+	move -r -os -wd  0 0 $moveZR ($Car + $BrakeFront_R);
+	
+	
+	$selectedGroup = `select -r ($Car + $WheelFront_L)`;
+	$select = `ls -sl`;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the wheels
+
+	$selectedGroup = `select -r ($Car + $WheelFront_R)`;
+	$select = `ls -sl`;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the wheels
+
+	$selectedGroup = `select -r ($Car + $BrakeFront_L)`;
+	$select = `ls -sl`;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the brake
+
+	$selectedGroup = `select -r ($Car + $BrakeFront_L)`;
+	$select = `ls -sl`;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the brake
+
+
+	//
+	// create rotation dummy
+	//
+	
+	float $wheelRadius[];
+	for ( $i=0 ; $i<4 ; $i++ ){
+		$selectedGroup = `select -r ($wheelList[$i])`;
+		$select = `ls -sl`;
+
+		$sizeBounds = getAnimatedSizeForMeshes( $select );
+		
+		float $radiusY = $sizeBounds[1]/2;
+		float $radiusZ = $sizeBounds[2]/2;
+		$wheelRadius[$i] = ($radiusY+$radiusZ)/2;
+		print ($wheelList[$i]+" radius is "+$wheelRadius[$i]+"\n");
+	};
+	
+	float $cylinderRadius = ($wheelRadius[0]+$wheelRadius[1]+$wheelRadius[2]+$wheelRadius[3])/4;
+
+	
+	string $rotationDummy = $Car+"_rotationDummy";
+	createNode "transform" -n $rotationDummy -p $Car ;
+	createNode "implicitSphere" -n ($rotationDummy+"_Sphere") -p $rotationDummy;
+	setAttr ($rotationDummy+".radius") $cylinderRadius;
+	
+	float $wheelPosition[3] = `xform -query -rotatePivot ($Car + $WheelRear_L)`;
+	move -a -os 0 ($wheelPosition[1]*5) $wheelPosition[2] $rotationDummy;
+	
+	setAttr -lock true -keyable false -channelBox false ($rotationDummy+".tx");
+	setAttr -lock true -keyable false -channelBox false ($rotationDummy+".ty");
+	setAttr -lock true -keyable false -channelBox false ($rotationDummy+".tz");
+	setAttr -lock true -keyable false -channelBox false ($rotationDummy+".ry");
+	setAttr -lock true -keyable false -channelBox false ($rotationDummy+".rz");
+
+	
+	// Create four wheel dummys
+	
+	string $wheelDummyFL = $Car+"_wheelDummyFL";
+	string $wheelDummyFR = $Car+"_wheelDummyFR";
+	string $wheelDummyRL = $Car+"_wheelDummyRL";
+	string $wheelDummyRR = $Car+"_wheelDummyRR";
+	
+	string $dummyList[] = { ($wheelDummyFL),
+							($wheelDummyFR),
+							($wheelDummyRL),
+							($wheelDummyRR)
+							};
+
+	for ( $i=0 ; $i<4 ; $i++ ){		// Make a nurbs arc for each wheel
+
+		createNode -name ($dummyList[$i]+"_arc") makeThreePointCircularArc;
+		setAttr ($dummyList[$i]+"_arc.pt1") 0 0 (-$cylinderRadius);
+		setAttr ($dummyList[$i]+"_arc.pt2") 0 0 $cylinderRadius ;
+		setAttr ($dummyList[$i]+"_arc.pt3") 0 $cylinderRadius 0 ;
+		setAttr ($dummyList[$i]+"_arc.d") 3;
+		setAttr ($dummyList[$i]+"_arc.s") 8;
+		createNode "transform" -n ($dummyList[$i]);
+		createNode "nurbsCurve" -name ($dummyList[$i]+"_curve") -parent ($dummyList[$i]);
+		connectAttr ($dummyList[$i]+"_arc.oc") ($dummyList[$i]+"_curve.cr");
+		
+	}
+	
+	$selectedGroup = `select -r ($Car + $WheelFront_L)`;
+	$select = `ls -sl`;
+	$sizeBounds = getAnimatedSizeForMeshes( $select );
+		
+
+	$wheelPosition = `xform -query -rotatePivot ($Car + $WheelFront_L)`;
+	move -a -os ($wheelPosition[0]+$sizeBounds[0]) $wheelPosition[1] $wheelPosition[2] $wheelDummyFL;
+
+	$wheelPosition = `xform -query -rotatePivot ($Car + $WheelFront_R)`;
+	move -a -os ($wheelPosition[0]-$sizeBounds[0]) $wheelPosition[1] $wheelPosition[2] $wheelDummyFR;
+
+	$wheelPosition = `xform -query -rotatePivot ($Car + $WheelRear_L)`;
+	move -a -os ($wheelPosition[0]+$sizeBounds[0]) $wheelPosition[1] $wheelPosition[2] $wheelDummyRL;
+
+	$wheelPosition = `xform -query -rotatePivot ($Car + $WheelRear_R)`;
+	move -a -os ($wheelPosition[0]-$sizeBounds[0]) $wheelPosition[1] $wheelPosition[2] $wheelDummyRR;
+	
+	for ( $i=0 ; $i<4 ; $i++ ){		// Lock rotate and translate of wheels
+		// Lock rotate and translate
+		setAttr -lock true -keyable false -channelBox false ($dummyList[$i]+".tx");
+		setAttr -lock true -keyable false -channelBox false ($dummyList[$i]+".ty");
+		setAttr -lock true -keyable false -channelBox false ($dummyList[$i]+".tz");
+		setAttr -lock true -keyable false -channelBox false ($dummyList[$i]+".ry");
+		setAttr -lock true -keyable false -channelBox false ($dummyList[$i]+".rz");
+	}
+	
+	// Make steering
+	string $steeringDummy = $Car+"_steeringDummy";
+	curve -n $steeringDummy -d 3 -p -30 0 -60 -p -30 0 -60 -p 0 0 60 -p 0 0 60 -p 0 0 60 -p 30 0 -60 -p 30 0 -60 -k 0 -k 0 -k 0 -k 1 -k 1 -k 1 -k 2 -k 2 -k 2 ;
+	parent $steeringDummy $Car;
+	float $steeringPosition[3] = `xform -query -rotatePivot ($Car + $WheelFront_L)`;
+	move -a -os 0 ($steeringPosition[1]*5) $steeringPosition[2] $steeringDummy;
+	transformLimits -ry -30 30 -ery 1 1 $steeringDummy;
+	
+	setAttr -lock true -keyable false -channelBox false ($steeringDummy+".tx");
+	setAttr -lock true -keyable false -channelBox false ($steeringDummy+".ty");
+	setAttr -lock true -keyable false -channelBox false ($steeringDummy+".tz");
+	setAttr -lock true -keyable false -channelBox false ($steeringDummy+".rx");
+	setAttr -lock true -keyable false -channelBox false ($steeringDummy+".rz");
+
+
+
+	// ====================== Setup Wheel Constraints ======================
+	
+	// Constrain dummies to main dummy rotation
+	
+	group -name ($Car+"_steerFL") -parent $Car $wheelDummyFL;
+	group -name ($Car+"_steerFR") -parent $Car $wheelDummyFR;
+	
+	connectAttr -f ($rotationDummy+".rotateX") ($wheelDummyFL+".rotateX");
+	connectAttr -f ($rotationDummy+".rotateX") ($wheelDummyFR+".rotateX");
+	connectAttr -f ($rotationDummy+".rotateX") ($wheelDummyRL+".rotateX");
+	connectAttr -f ($rotationDummy+".rotateX") ($wheelDummyRR+".rotateX");
+
+	connectAttr -f ($steeringDummy+".rotateY") ($Car+"_steerFL"+".rotateY");
+	connectAttr -f ($steeringDummy+".rotateY") ($Car+"_steerFR"+".rotateY");
+	
+	// Constrain real wheels to dummy wheels
+	
+	connectAttr -f ($rotationDummy+".rotateX") ($Car+$WheelRear_L+".rotateX");
+	connectAttr -f ($rotationDummy+".rotateX") ($Car+$WheelRear_R+".rotateX");
+
+	connectAttr -f ($steeringDummy+".rotateY") ($Car+$BrakeFront_L+".rotateY");
+	connectAttr -f ($steeringDummy+".rotateY") ($Car+$BrakeFront_R+".rotateY");
+	
+	select -r $wheelDummyFL;
+	select -add ($Car + $WheelFront_L) ;
+	doCreateOrientConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	orientConstraint -offset 0 0 0 -weight 1;
+	
+	select -r $wheelDummyFR ;
+	select -add ($Car + $WheelFront_R) ;
+	doCreateOrientConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	orientConstraint -offset 0 0 0 -weight 1;
+	
+	group -name ($Car+"_controlWheels") ($Car+"_steerFL") ($Car+"_steerFR") $wheelDummyRL $wheelDummyRR;
+
+
+	// ====================== Body =====================================
+	
+	$selectItem = $Car + $Wheels;
+	string $selectedWheelGroup = `select -r $selectItem`;
+	$select = `ls -sl`;
+
+	float $wheelBounds[] = getAnimatedBoundsForMeshes( $select ); //use the top of wheels as pivot for car
+
+	$selectItem = $Car + $Body;
+	$selectedGroup = `select -r $selectItem`;
+	$select = `ls -sl`;
+
+	$bounds = getAnimatedBoundsForMeshes( $select );
+	$pivotX = ($bounds[0]+$bounds[3])/2;
+	$pivotY = $wheelBounds[4];
+	$pivotZ = ($bounds[2]+$bounds[5])/2;
+	move -a -os $pivotX $pivotY $pivotZ ($selectItem+".scalePivot") ($selectItem+".rotatePivot") ;
+	
+	string $bodyDummy = $Car+"_bodyDummy";
+	curve -n $bodyDummy -d 3 -p 0 0 -150 -p 0 0 -150 -p 0 60 -150 -p 0 60 -150 -p 0 60 -150 -p 0 0 150 -p 0 0 150 -k 0 -k 0 -k 0 -k 1 -k 1 -k 1 -k 2 -k 2 -k 2 ;
+	parent $bodyDummy $Car;
+	float $bodyPosition[3] = `xform -query -rotatePivot ($Car + $Body)`;
+	move -a -os 0 ($bodyPosition[1]*2) $bodyPosition[2] $bodyDummy;
+	
+	transformLimits -rx -3 3 -erx 1 1 $bodyDummy;
+	transformLimits -rz -3 3 -erz 1 1 $bodyDummy;
+	setAttr -lock true -keyable false -channelBox false ($bodyDummy+".tx");
+	setAttr -lock true -keyable false -channelBox false ($bodyDummy+".ty");
+	setAttr -lock true -keyable false -channelBox false ($bodyDummy+".tz");
+	setAttr -lock true -keyable false -channelBox false ($bodyDummy+".ry");
+
+	// Constrain dummy to car
+	
+	connectAttr -f ($bodyDummy+".rotateZ") ($Car+$Body+".rotateZ");
+	connectAttr -f ($bodyDummy+".rotateX") ($Car+$Body+".rotateX");
+
+
+	// ================== Group Rig ==========================
+	
+	group -name ($Car+"_Rig") -parent $Car $rotationDummy $steeringDummy ($Car+"_controlWheels");
+
+	
+	select -cl;	
+	
+	// Give some feedback for next steps
+	
+	string $message = "\nEat some poo.";
+	
+	string $result = `confirmDialog 
+		-title "spckRenameCar Success!"
+		-message $message
+		-button "OK"
+		-defaultButton "OK"`;
+	print "Complete.\n";
+}
+
+
+
+
+// Get boundry coordinates of selection
+
+global proc float[] getAnimatedBoundsForMeshes( string $skinList[] ) {
+
+	float $bounds[];
+	float $skinMinBoundsX[];
+	float $skinMinBoundsY[];
+	float $skinMinBoundsZ[];
+	float $skinMaxBoundsX[];
+	float $skinMaxBoundsY[];
+	float $skinMaxBoundsZ[];
+	
+	
+	for( $skin in $skinList ) {
+		$skinMinBoundsX[( `size $skinMinBoundsX` )] = `getAttr ( $skin + ".boundingBoxMinX" )`;
+		$skinMinBoundsY[( `size $skinMinBoundsY` )] = `getAttr ( $skin + ".boundingBoxMinY" )`;
+		$skinMinBoundsZ[( `size $skinMinBoundsZ` )] = `getAttr ( $skin + ".boundingBoxMinZ" )`;
+		$skinMaxBoundsX[( `size $skinMaxBoundsX` )] = `getAttr ( $skin + ".boundingBoxMaxX" )`;
+		$skinMaxBoundsY[( `size $skinMaxBoundsY` )] = `getAttr ( $skin + ".boundingBoxMaxY" )`;
+		$skinMaxBoundsZ[( `size $skinMaxBoundsZ` )] = `getAttr ( $skin + ".boundingBoxMaxZ" )`;		
+	}
+	
+	$skinMinBoundsX = `sort $skinMinBoundsX`;
+	$skinMinBoundsY = `sort $skinMinBoundsY`;
+	$skinMinBoundsZ = `sort $skinMinBoundsZ`;
+	$skinMaxBoundsX = `sort $skinMaxBoundsX`;
+	$skinMaxBoundsY = `sort $skinMaxBoundsY`;
+	$skinMaxBoundsZ = `sort $skinMaxBoundsZ`;
+	
+	$bounds[0] = $skinMinBoundsX[0];
+	$bounds[1] = $skinMinBoundsY[0];
+	$bounds[2] = $skinMinBoundsZ[0];
+	$bounds[3] = $skinMaxBoundsX[( `size $skinMaxBoundsX` - 1 )];
+	$bounds[4] = $skinMaxBoundsY[( `size $skinMaxBoundsY` - 1 )];
+	$bounds[5] = $skinMaxBoundsZ[( `size $skinMaxBoundsZ` - 1 )];
+	
+	return $bounds;
+}
+
+// Get boundry coordinates of selection
+
+global proc float[] getAnimatedSizeForMeshes( string $skinList[] ) {
+
+	float $bounds[];
+	float $skinSizeBoundsX[];
+	float $skinSizeBoundsY[];
+	float $skinSizeBoundsZ[];	
+	
+	for( $skin in $skinList ) {
+		$skinSizeBoundsX[( `size $skinSizeBoundsX` )] = `getAttr ( $skin + ".boundingBoxSizeX" )`;
+		$skinSizeBoundsY[( `size $skinSizeBoundsY` )] = `getAttr ( $skin + ".boundingBoxSizeY" )`;
+		$skinSizeBoundsZ[( `size $skinSizeBoundsZ` )] = `getAttr ( $skin + ".boundingBoxSizeZ" )`;
+	}
+	
+	$skinSizeBoundsX = `sort $skinSizeBoundsX`;
+	$skinSizeBoundsY = `sort $skinSizeBoundsY`;
+	$skinSizeBoundsZ = `sort $skinSizeBoundsZ`;
+	
+	$bounds[0] = $skinSizeBoundsX[0];
+	$bounds[1] = $skinSizeBoundsY[0];
+	$bounds[2] = $skinSizeBoundsZ[0];
+	
+	return $bounds;
+}
+
+// Fix bad alignment of a wheel
+
+global proc spckAlignWheel( string $selectItem ) {
+
+	print "Aligning Wheels!\n\n";
+
+	$selectedGroup = `select -r $selectItem`;
+	$select = `ls -sl`;
+
+	viewFit -animate 1; allViewFit(0);
+	
+	$bounds = getAnimatedBoundsForMeshes( $select );
+	$pivotX = ($bounds[0]+$bounds[3])/2;
+	$pivotY = ($bounds[1]+$bounds[4])/2;
+	$pivotZ = ($bounds[2]+$bounds[5])/2;
+	move -a -os $pivotX $pivotY $pivotZ ($selectItem+".scalePivot") ($selectItem+".rotatePivot");
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+
+	float $sizeBounds[] = getAnimatedSizeForMeshes( $select );
+	float $sizeX = $sizeBounds[0];
+	float $sizeY = $sizeBounds[1];
+	float $sizeZ = $sizeBounds[2];
+	float $newSizeX = $sizeX;
+	float $newSizeY = $sizeY;
+	float $newSizeZ = $sizeZ;
+	
+	float $nudge = 0.1;
+	float $threshold = 0.001;
+	float $difference = 1.0;
+
+		
+	for ($i=0 ; $i<3 ; $i++ ) { //filter through the process twice
+		// Align wheel on X-bounds, Y-Axis
+		
+	
+		rotate -r -os 0 $nudge 0;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		$sizeBounds = getAnimatedSizeForMeshes( $select );
+		float $newSizeXpos = $sizeBounds[0];
+	
+		rotate -r -os 0 (-2*$nudge) 0;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		$sizeBounds = getAnimatedSizeForMeshes( $select );
+		float $newSizeXneg = $sizeBounds[0];
+		rotate -r -os 0 $nudge 0;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		
+		print ("Aligning Wheel: "+$selectItem);
+		print ("Original X size is "+ $sizeX + "\n");
+		print ("Pos Rot X size is "+ $newSizeXpos + "\n");
+		print ("Neg Rot X size is "+ $newSizeXneg + "\n\n");
+	
+		if ( $newSizeXpos < $newSizeXneg ) {
+			print "Positive Rotate was smaller\n\n\n";
+		}
+		else if ( $newSizeXpos > $newSizeXneg ){
+			print "Negative Rotate was smaller\n\n\n";
+			$nudge = -$nudge;
+		}
+		else {
+			$newSizeX=$sizeX;
+			$difference = -1;
+		}
+	
+		while ( $difference > 0 ) {
+			
+			$sizeX = $newSizeX;
+	
+			rotate -r -os 0 $nudge 0;
+			makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+			refresh -f;
+			$sizeBounds = getAnimatedSizeForMeshes( $select );
+			$newSizeX = $sizeBounds[0];
+			$difference = $sizeX - $newSizeX;
+			
+			/*
+			print ("sizeX = "+$sizeX+"\n"); 
+			print ("newSizeX = "+$newSizeX+"\n"); 
+			print ($sizeX - $newSizeX);
+			print "\n";
+	
+			print $difference;
+			*/
+		}	
+		
+		// Align wheel on X-bounds, Z-axis
+		$difference = 1;
+		
+		rotate -r -os 0 0 $nudge;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		$sizeBounds = getAnimatedSizeForMeshes( $select );
+		float $newSizeXpos = $sizeBounds[0];
+	
+		rotate -r -os 0 0 (-2*$nudge);
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		$sizeBounds = getAnimatedSizeForMeshes( $select );
+		float $newSizeXneg = $sizeBounds[0];
+		rotate -r -os 0 0 $nudge;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		
+		print ("Original X size is "+ $sizeX + "\n");
+		print ("Pos Rot X size is "+ $newSizeXpos + "\n");
+		print ("Neg Rot X size is "+ $newSizeXneg + "\n\n");
+	
+		if ( $newSizeXpos < $newSizeXneg ) {
+			print "Positive Rotate was smaller\n\n";
+		}
+		else if ( $newSizeXpos > $newSizeXneg ){
+			print "Negative Rotate was smaller\n\n";
+			$nudge = -$nudge;
+		}
+		else {
+			$newSizeX=$sizeX;
+			$difference = -1;
+		}
+	
+		while ( $difference > 0 ) {
+			
+			$sizeX = $newSizeX;
+	
+			rotate -r -os 0 0 $nudge;
+			makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+			refresh -f;
+			$sizeBounds = getAnimatedSizeForMeshes( $select );
+			$newSizeX = $sizeBounds[0];
+			$difference = $sizeX - $newSizeX;
+			
+			/*
+			print ("sizeX = "+$sizeX+"\n"); 
+			print ("newSizeX = "+$newSizeX+"\n"); 
+			print ($sizeX - $newSizeX);
+			print "\n";
+	
+			print $difference;
+			*/
+		}	
+	}
+	
+	// Align wheels to sit exactly on the ground
+
+	$sizeBounds = getAnimatedSizeForMeshes( $select );
+	$bounds = getAnimatedBoundsForMeshes( $select );
+	float $moveY = $sizeBounds[1] - $bounds[4];
+	
+	move -a -ws -y $moveY;
+
+	// Do the final pivot set
+	 
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+}
+

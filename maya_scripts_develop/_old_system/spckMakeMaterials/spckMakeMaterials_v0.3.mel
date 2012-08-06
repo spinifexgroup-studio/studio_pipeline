@@ -1,0 +1,736 @@
+// spckMakeMaterials_v0.3.mel
+//
+// By Daniel Harkness
+//
+// Setup scene according to car kit guidelines
+
+source "spinCreateLinearGammaUtility.mel";
+
+//
+//
+// Add all materials
+//
+//
+
+global proc spckMakeMaterials() {
+
+	spckMakeMatteMaterials();
+	spckMakePlasticMaterials();
+	spckMakeLightMaterials();
+	spckMakeMetalMaterials();
+	spckMakeChromeMaterials();
+	spckMakeWheelMaterials();
+	spckMakeBrakeMaterials();
+	spckMakeWindowMaterials();
+	spckMakePaintMaterials();
+
+}
+
+
+//
+//
+// Add essential mattes materials
+//
+//
+
+global proc spckMakeMatteMaterials() {
+
+	string $matteBlack 		= "ssMatteBlack";
+	string $matteWhite 		= "ssMatteWhite";
+	string $matteRed 		= "ssMatteRed";
+	string $matteGreen 		= "ssMatteGreen";
+	string $matteBlue 		= "ssMatteBlue";
+	
+	string $matteBin		= "mattes";
+	string $matteSolidBin   = "mattesSolid";
+	
+	// Check if matte shader exists - if not create it - add to mattes bin
+	
+	if (!objExists($matteBlack)){
+		shadingNode -n $matteBlack -asShader surfaceShader;
+		sets -renderable true -noSurfaceShader true -empty -name ($matteBlack+"SG");
+		connectAttr -f ($matteBlack+".outColor") ($matteBlack+"SG.surfaceShader");
+		setAttr ($matteBlack+".outColor") -type double3 0 0 0 ;
+	}
+	select -r $matteBlack;
+	binMembership -add $matteBin;
+	binMembership -add $matteSolidBin;
+	
+	// Check if matte shader exists - if not create it - add to mattes bin
+
+	
+	if (!objExists($matteWhite)){
+		shadingNode -n $matteWhite -asShader surfaceShader;
+		sets -renderable true -noSurfaceShader true -empty -name ($matteWhite+"SG");
+		connectAttr -f ($matteWhite+".outColor") ($matteWhite+"SG.surfaceShader");
+		setAttr ($matteWhite+".outColor") -type double3 1 1 1 ;
+	}
+	select -r $matteWhite;
+	binMembership -add $matteBin;
+	binMembership -add $matteSolidBin;
+
+	// Check if matte shader exists - if not create it - add to mattes bin
+	
+	
+	if (!objExists($matteRed)){
+		shadingNode -n $matteRed -asShader surfaceShader;
+		sets -renderable true -noSurfaceShader true -empty -name ($matteRed+"SG");
+		connectAttr -f ($matteRed+".outColor") ($matteRed+"SG.surfaceShader");
+		setAttr ($matteRed+".outColor") -type double3 1 0 0 ;
+	}
+	select -r $matteRed;
+	binMembership -add $matteBin;
+	binMembership -add $matteSolidBin;
+
+	// Check if matte shader exists - if not create it - add to mattes bin
+	
+	if (!objExists($matteGreen)){
+		shadingNode -n $matteGreen -asShader surfaceShader;
+		sets -renderable true -noSurfaceShader true -empty -name ($matteGreen+"SG");
+		connectAttr -f ($matteGreen+".outColor") ($matteGreen+"SG.surfaceShader");
+		setAttr ($matteGreen+".outColor") -type double3 0 1 0 ;
+	}
+	select -r $matteGreen;
+	binMembership -add $matteBin;
+
+	// Check if matte shader exists - if not create it - add to mattes bin
+	
+	if (!objExists($matteBlue)){
+		shadingNode -n $matteBlue -asShader surfaceShader;
+		sets -renderable true -noSurfaceShader true -empty -name ($matteBlue+"SG");
+		connectAttr -f ($matteBlue+".outColor") ($matteBlue+"SG.surfaceShader");
+		setAttr ($matteBlue+".outColor") -type double3 0 0 1 ;
+	}	binMembership -add $matteBin;
+	binMembership -add $matteSolidBin;
+
+	select -r $matteBlue;
+	binMembership -add $matteBin;
+	binMembership -add $matteSolidBin;
+}
+
+
+//
+//
+// Add essential plastic materials
+//
+//
+
+global proc spckMakePlasticMaterials() {
+
+	string $plasticBlackMatte 		= "VR_Plastic_Black_Matte";
+	string $plasticBlackGloss 		= "vr_Plastic_Black_Gloss";
+	string $plasticBlackSemiGloss	= "vr_Plastic_Black_SemiGloss";
+	string $plasticBlackLowSheen 	= "vr_Plastic_Black_LowSheen";
+	string $plasticBlackSatin 		= "vr_Plastic_Black_Satin";
+	
+	string $plasticsBin				= "Car_Plastics";
+	string $partsBin				= "Car_Parts";
+	
+	string $materialList[] = { $plasticBlackMatte,
+							$plasticBlackGloss,
+							$plasticBlackSemiGloss,
+							$plasticBlackLowSheen,
+							$plasticBlackSatin
+							};
+
+	// Check if brake shader exists - if not create it - add to window bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			shadingNode -n $material -asShader VRayMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+		}
+		select -r $material;
+		binMembership -add $plasticsBin;
+		binMembership -add $partsBin;
+		
+		// Set Common Atrrivbutes
+		setAttr ($material+".color") -type double3 0 0 0 ;
+		setAttr ($material+".reflectionColor") -type double3 1 1 1 ;
+		setAttr ($material+".brdfType") 1;
+		setAttr ($material+".useFresnel") 1;
+		setAttr ($material+".reflectionColorAmount") 0.4;
+		setAttr ($material+".refractionIOR") 1.584;
+	}
+	
+	// Setup Amounts of reflection glossiness for plastics
+	setAttr ($plasticBlackMatte+".reflectionGlossiness") 0.55;
+	setAttr ($plasticBlackGloss+".reflectionGlossiness") 0.95;
+	setAttr ($plasticBlackSemiGloss+".reflectionGlossiness") 0.8;
+	setAttr ($plasticBlackLowSheen+".reflectionGlossiness") 0.6;
+	setAttr ($plasticBlackSatin+".reflectionGlossiness") 0.7;
+	
+	// Setup Roughness for plastics
+	setAttr ($plasticBlackMatte+".roughnessAmount") 0.2;
+	setAttr ($plasticBlackGloss+".roughnessAmount") 0;
+	setAttr ($plasticBlackSemiGloss+".roughnessAmount") 0.2;
+	setAttr ($plasticBlackLowSheen+".roughnessAmount") 0.6;
+	setAttr ($plasticBlackSatin+".roughnessAmount") 0.4;
+
+	
+}
+
+//
+//
+// Add head and tailight materials
+//
+//
+
+global proc spckMakeLightMaterials() {
+
+	string $plasticClearThin		= "vrPlasticClearThin";
+	string $plasticClearThick		= "vrPlasticClearThick";
+	string $plasticClearRedThin		= "vrPlasticClearRedThin";
+	string $plasticClearRedThick	= "vrPlasticClearRedThick";
+	string $plasticClearOrangeThin	= "vrPlasticClearOrangeThin";
+	string $plasticClearOrangeThick	= "vrPlasticClearOrangeThick";
+	string $bulbClearThin			= "vrBulbClearThin";
+	string $bulbClearThick			= "vrBulbClearThick";
+
+	string $lightsBin		= "carLights";
+	
+	string $materialList[] = { $plasticClearThin,
+							$plasticClearThick,
+							$plasticClearRedThin,
+							$plasticClearRedThick,
+							$plasticClearOrangeThin,
+							$plasticClearOrangeThick,
+							$bulbClearThin,
+							$bulbClearThick
+							};
+						
+	// Check if brake shader exists - if not create it - add to window bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			shadingNode -n $material -asShader VRayMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+		}
+		select -r $material;
+		binMembership -add $lightsBin;
+	}
+	
+	// Setup Colour and refraction
+	
+	// Clear
+	setAttr ($plasticClearThin+".refractionColor") -type double3 1 1 1 ;
+	setAttr ($plasticClearThick+".refractionColor") -type double3 1 1 1 ;
+
+	// Red
+	setAttr ($plasticClearRedThin+".color") -type double3 1 0 0 ;
+	setAttr ($plasticClearRedThick+".color") -type double3 1 0 0 ;
+	setAttr ($plasticClearRedThin+".refractionColor") -type double3 1 0 0 ;
+	setAttr ($plasticClearRedThick+".refractionColor") -type double3 1 0 0 ;
+
+	// Orange
+	setAttr ($plasticClearOrangeThin+".color") -type double3 1 0.35 0 ;
+	setAttr ($plasticClearOrangeThick+".color") -type double3 1 0.35 0 ;
+	setAttr ($plasticClearOrangeThin+".refractionColor") -type double3 1 0.35 0 ;
+	setAttr ($plasticClearOrangeThick+".refractionColor") -type double3 1 0.35 0 ;
+	
+	// Light Bulb
+	setAttr ($bulbClearThin+".refractionColor") -type double3 1 1 1 ;
+	setAttr ($bulbClearThick+".refractionColor") -type double3 1 1 1 ;
+
+}
+
+
+//
+//
+// Add metal materials
+//
+//
+
+global proc spckMakeMetalMaterials() {
+
+	string $metalUnderCarriage	= "vrMetalUnderCarriage";
+	string $metalBlackGloss		= "vrMetalBlackGloss";
+	string $metalBlackMatte		= "vrMetalBlackMatte";
+	string $metalSteelGloss		= "vrMetalSteelGloss";
+	string $metalSteelMatte		= "vrMetalSteelMatte";
+	
+	string $metalBin		= "carMetal";
+	string $partsBin		= "carParts";
+
+	string $materialList[] = { $metalUnderCarriage,
+							$metalBlackGloss,
+							$metalBlackMatte,
+							$metalSteelGloss,
+							$metalSteelMatte
+							};
+							
+	// Check if brake shader exists - if not create it - add to window bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			shadingNode -n $material -asShader VRayMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+		}
+		select -r $material;
+		binMembership -add $metalBin;
+		
+		// Add everything except undercarriage to the parts bin
+		if ($material != $metalUnderCarriage){
+			binMembership -add $partsBin;
+		}
+	}
+	
+	// Setup Black
+	
+	setAttr ($metalBlackGloss+".color") -type double3 0.1 0.1 0.1 ;
+	setAttr ($metalBlackMatte+".color") -type double3 0.1 0.1 0.1 ;
+
+	// Setup Steel
+	
+	setAttr ($metalSteelGloss+".color") -type double3 0.5 0.5 0.5 ;
+	setAttr ($metalSteelMatte+".color") -type double3 0.5 0.5 0.5 ;
+	
+	// Setup Glossies
+	
+	// Setup Mattes
+}
+
+//
+//
+// Add chrome materials
+//
+//
+
+global proc spckMakeChromeMaterials() {
+
+	string $chrome			= "VR_Chrome";
+	string $chromeLowSheen	= "VR_Chrome_LowSheen";
+	string $chromeSatin		= "VR_Chrome_Satin";
+	string $chromeBlue		= "VR_Chrome_Blue";
+	string $chromeLights	= "VR_Chrome_Lights";
+
+	string $chromeBin		= "car_Chrome";
+	string $lightsBin		= "car_Lights";
+	string $partsBin		= "car_Parts";
+
+	string $materialList[] = { $chrome,
+							$chromeLowSheen,
+							$chromeSatin,
+							$chromeBlue,
+							$chromeLights
+							};
+							
+	// Check if  shader exists - if not create it - add to window bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			shadingNode -n $material -asShader VRayMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+		}
+		select -r $material;
+		binMembership -add $chromeBin;
+	
+		setAttr ($material+".color") -type double3 0.25 0.25 0.25 ;
+		setAttr ($material+".reflectionColor") -type double3 1 1 1;
+		setAttr ($material+".reflectionColorAmount") 0.85;
+		setAttr ($material+".brdfType") 0;
+		setAttr ($material+".useFresnel") 1;
+		setAttr ($material+".refractionIOR") 20;
+	}
+
+	// Setup Amounts of reflection glossiness for plastics
+	setAttr ($chrome+".reflectionGlossiness") 1;
+	setAttr ($chromeLowSheen+".reflectionGlossiness") 0.5;
+	setAttr ($chromeSatin+".reflectionGlossiness") 0.7;
+	setAttr ($chromeBlue+".reflectionGlossiness") 0.6;
+	setAttr ($chromeLights+".reflectionGlossiness") 0.7;
+
+	// Add specific chromes to bins
+	select -r $chromeLights;
+	binMembership -add $lightsBin;
+	
+	// Setup Blue Chrome
+	setAttr ($chromeBlue+".color") -type double3 0.125 0.125 0.25;
+	setAttr ($chromeBlue+".reflectionColor") -type double3 0.9 0.9 1;
+	
+	// Setup Bright Chrome
+	setAttr ($chromeLights+".hilightGlossinessLock") 0;
+	setAttr ($chromeLights+".hilightGlossiness") 0.5;
+	setAttr ($chromeLights+".reflectionGlossiness") 1;
+}
+
+//
+//
+// Add Wheel materials
+//
+//
+
+global proc spckMakeWheelMaterials() {
+
+	string $alloyMatte		= "VR_Alloy_Matte";
+	string $alloyGloss		= "VR_Alloy_Gloss";
+	string $tyreMatte		= "VR_Tyre_Matte";
+	string $tyreGloss		= "VR_Tyre_Gloss";
+
+	string $wheelBin		= "Car_Wheels";
+	
+	string $materialList[] = { $alloyMatte,
+							$alloyGloss,
+							$tyreMatte,
+							$tyreGloss
+							};
+							
+	string $alloyList[] = { $alloyMatte,
+							$alloyGloss
+							};
+							
+	string $tyreList[] = { $tyreMatte,
+							$tyreGloss
+							};
+							
+	// Check if brake shader exists - if not create it - add to window bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			shadingNode -n $material -asShader VRayMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+		}
+		select -r $material;
+		binMembership -add $wheelBin;
+	}
+	
+	// Setup tyres
+	
+	for ($material in $tyreList){
+		setAttr ($material+".color") -type double3 0.1 0.1 0.1 ;
+	}
+	
+	// Setup alloys
+	
+	for ($material in $alloyList){
+	
+		//Color Ramp
+		shadingNode -n ($material+"_colorRamp") -asTexture ramp;
+		shadingNode -n ($material+"_ramps_place2dTexture") -asUtility place2dTexture;
+		connectAttr ($material+"_ramps_place2dTexture.outUV") ($material+"_colorRamp.uv");
+		connectAttr ($material+"_ramps_place2dTexture.outUvFilterSize") ($material+"_colorRamp.uvFilterSize");
+		connectAttr -f ($material+"_colorRamp.outColor") ($material+".color");
+
+		setAttr ($material+"_colorRamp.type") 1;
+		removeMultiInstance -break true ($material+"_colorRamp.colorEntryList[2]");
+		setAttr ($material+"_colorRamp.colorEntryList[1].position") 0.975;
+		setAttr ($material+"_colorRamp.colorEntryList[0].position") 0.85;
+		setAttr ($material+"_colorRamp.colorEntryList[1].color") -type double3 0.3 0.3 0.3;
+		setAttr ($material+"_colorRamp.colorEntryList[0].color") -type double3 0.1 0.1 0.1;
+
+	
+		//Refl Ramp
+		shadingNode -n ($material+"_reflRamp") -asTexture ramp;
+		connectAttr ($material+"_ramps_place2dTexture.outUV") ($material+"_reflRamp.uv");
+		connectAttr ($material+"_ramps_place2dTexture.outUvFilterSize") ($material+"_reflRamp.uvFilterSize");
+		connectAttr -f ($material+"_reflRamp.outColor") ($material+".reflectionColor");
+
+		setAttr ($material+"_reflRamp.type") 1;
+		removeMultiInstance -break true ($material+"_reflRamp.colorEntryList[2]");
+		setAttr ($material+"_reflRamp.colorEntryList[1].position") 0.975;
+		setAttr ($material+"_reflRamp.colorEntryList[0].position") 0.85;
+		setAttr ($material+"_reflRamp.colorEntryList[1].color") -type double3 1 1 1;
+		setAttr ($material+"_reflRamp.colorEntryList[0].color") -type double3 0 0 0;
+		
+		//Set Last Attributes
+		setAttr ($material+".reflectionColorAmount") 0.85;
+		setAttr ($material+".refractionIOR") 21;
+		setAttr ($material+".brdfType") 0;
+		setAttr ($material+".useFresnel") 1;
+	}
+
+}
+
+//
+//
+// Add brake materials
+//
+//
+
+global proc spckMakeBrakeMaterials() {
+
+	string $metalDisc			= "VR_Metal_Brake_Disc";
+	string $metalCalliperSteel	= "VR_Metal_Brake_Calliper_Steel";
+
+	string $brakeBin			= "Car_Brakes";
+	string $metalBin			= "Car_Metals";
+	
+	string $materialList[] = { $metalDisc,
+							$metalCalliperSteel
+							};
+	
+	// Check if brake shader exists - if not create it - add to window bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			shadingNode -n $material -asShader VRayMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+		}
+		select -r $material;
+		binMembership -add $brakeBin;
+		binMembership -add $metalBin;
+	}
+	
+	
+	// Setup Calliper Steel ==================================================================
+	
+	
+	// Setup Disc ==================================================================
+	
+	// Setup ramp conections
+	
+	spinCreateLinearGammaUtility ( ($metalDisc+"_colorRamp_gamma") );
+	spinCreateLinearGammaUtility ( ($metalDisc+"_reflRamp_gamma") );
+	spinCreateLinearGammaUtility ( ($metalDisc+"_bumpRamp_gamma") );
+	
+	shadingNode -n ($metalDisc+"_colorRamp") -asTexture ramp;
+	shadingNode -n ($metalDisc+"_reflRamp") -asTexture ramp;
+	shadingNode -n ($metalDisc+"_anisRamp") -asTexture ramp;
+	shadingNode -n ($metalDisc+"_bumpRamp") -asTexture ramp;
+
+	shadingNode -n ($metalDisc+"_ramps_place2dTexture") -asUtility place2dTexture;
+	
+	connectAttr ($metalDisc+"_ramps_place2dTexture.outUV") ($metalDisc+"_colorRamp.uv");
+	connectAttr ($metalDisc+"_ramps_place2dTexture.outUvFilterSize") ($metalDisc+"_colorRamp.uvFilterSize");
+	connectAttr -f ($metalDisc+"_colorRamp.outColor") ($metalDisc+"_colorRamp_gamma.value");
+	connectAttr -f ($metalDisc+"_colorRamp_gamma.outValue") ($metalDisc+".color");
+		
+	connectAttr ($metalDisc+"_ramps_place2dTexture.outUV") ($metalDisc+"_reflRamp.uv");
+	connectAttr ($metalDisc+"_ramps_place2dTexture.outUvFilterSize") ($metalDisc+"_reflRamp.uvFilterSize");
+	connectAttr -f ($metalDisc+"_reflRamp.outColor") ($metalDisc+"_reflRamp_gamma.value");
+	connectAttr -f ($metalDisc+"_reflRamp_gamma.outValue") ($metalDisc+".reflectionColor");
+		
+	connectAttr ($metalDisc+"_ramps_place2dTexture.outUV") ($metalDisc+"_anisRamp.uv");
+	connectAttr ($metalDisc+"_ramps_place2dTexture.outUvFilterSize") ($metalDisc+"_anisRamp.uvFilterSize");
+	connectAttr -f ($metalDisc+"_anisRamp.outAlpha") ($metalDisc+".anisotropyRotation");
+		
+	connectAttr ($metalDisc+"_ramps_place2dTexture.outUV") ($metalDisc+"_bumpRamp.uv");
+	connectAttr ($metalDisc+"_ramps_place2dTexture.outUvFilterSize") ($metalDisc+"_bumpRamp.uvFilterSize");
+	connectAttr -f ($metalDisc+"_bumpRamp.outColor") ($metalDisc+"_bumpRamp_gamma.value");
+	connectAttr -f ($metalDisc+"_bumpRamp_gamma.outValue") ($metalDisc+".bumpMap");
+	
+		
+	//Colour Ramp
+	setAttr ($metalDisc+"_colorRamp.type") 4;
+	setAttr ($metalDisc+"_colorRamp.interpolation") 3;
+	setAttr ($metalDisc+"_colorRamp.colorEntryList[0].position") 0.3;
+	setAttr ($metalDisc+"_colorRamp.colorEntryList[1].position") 0.4;
+	setAttr ($metalDisc+"_colorRamp.colorEntryList[2].position") 0.6;
+	setAttr ($metalDisc+"_colorRamp.colorEntryList[3].position") 0.75;
+	setAttr ($metalDisc+"_colorRamp.colorEntryList[0].color") -type double3 0.36 0.35 0.32;
+	setAttr ($metalDisc+"_colorRamp.colorEntryList[1].color") -type double3 0.26 0.25 0.20;
+	setAttr ($metalDisc+"_colorRamp.colorEntryList[2].color") -type double3 0.60 0.57 0.47;
+	setAttr ($metalDisc+"_colorRamp.colorEntryList[3].color") -type double3 0.16 0.15 0.13;
+
+	
+	//Refl Ramp
+	setAttr ($metalDisc+"_reflRamp.type") 4;
+	setAttr ($metalDisc+"_reflRamp.interpolation") 5;
+	setAttr ($metalDisc+"_reflRamp.colorEntryList[0].position") 0.4;
+	setAttr ($metalDisc+"_reflRamp.colorEntryList[1].position") 0.5;
+	setAttr ($metalDisc+"_reflRamp.colorEntryList[2].position") 0.7;
+	setAttr ($metalDisc+"_reflRamp.colorEntryList[3].position") 0.8;
+	setAttr ($metalDisc+"_reflRamp.colorEntryList[0].color") -type double3 0.25 0.24 0.23;
+	setAttr ($metalDisc+"_reflRamp.colorEntryList[1].color") -type double3 1.00 0.99 0.92;
+	setAttr ($metalDisc+"_reflRamp.colorEntryList[2].color") -type double3 1.00 0.99 0.92;
+	setAttr ($metalDisc+"_reflRamp.colorEntryList[3].color") -type double3 0.16 0.15 0.14;
+	
+	//Anis Ramp
+	setAttr ($metalDisc+"_anisRamp.type") 3;
+	setAttr ($metalDisc+"_anisRamp.interpolation") 1;
+	removeMultiInstance -break true ($metalDisc+"_anisRamp.colorEntryList[2]");
+	setAttr ($metalDisc+"_anisRamp.colorEntryList[0].position") 0.0;
+	setAttr ($metalDisc+"_anisRamp.colorEntryList[1].position") 1.0;
+	setAttr ($metalDisc+"_anisRamp.colorEntryList[0].color") -type double3 0 0 0;
+	setAttr ($metalDisc+"_anisRamp.colorEntryList[1].color") -type double3 1 1 1;
+
+	//Bump Ramp
+	setAttr ($metalDisc+"_bumpRamp.type") 4;
+	setAttr ($metalDisc+"_bumpRamp.interpolation") 1;
+	
+	int $rings = 200;
+	
+	for ($i = 1 ; $i <= $rings ; $i++) {
+		float $centreGrey = 0.20;
+		float $outsideGrey = 0.50;
+		float $greyRange = $outsideGrey-$centreGrey;
+		float $rampPosition = float($i) / float($rings);
+		
+		if ($i % 2 == 0) {
+			float $greyValue = $outsideGrey - ( $greyRange * $rampPosition );
+			
+			setAttr ($metalDisc+"_bumpRamp.colorEntryList["+$i+"].color") -type double3 $greyValue $greyValue $greyValue;
+		}
+		else {
+			setAttr ($metalDisc+"_bumpRamp.colorEntryList["+$i+"].color") -type double3 0.7 0.7 0.7;
+		}	
+		
+		setAttr ($metalDisc+"_bumpRamp.colorEntryList["+$i+"].position") $rampPosition;
+		print $rampPosition;
+	}
+	
+	//Set Last Attributes
+	setAttr ($metalDisc+".diffuseColorAmount") 0.8;
+	setAttr ($metalDisc+".brdfType") 2;
+	setAttr ($metalDisc+".reflectionColorAmount") 0.7;
+	setAttr ($metalDisc+".reflectionGlossiness") 0.8;
+	setAttr ($metalDisc+".reflectionSubdivs") 24;
+	setAttr ($metalDisc+".reflectionsMaxDepth") 2;
+	setAttr ($metalDisc+".anisotropy") -0.9;
+
+	setAttr ($metalDisc+".reflectionColorAmount") 0.7;
+	setAttr ($metalDisc+".refractionIOR") 8;
+	setAttr ($metalDisc+".bumpMult") 0.05;
+	setAttr ($metalDisc+".useFresnel") 1;
+}
+
+//
+//
+// Add window materials
+//
+//
+
+global proc spckMakeWindowMaterials() {
+
+	string $glassTintBlackOpaque		= "vrGlassTintedOpaque";
+	string $glassTintBlackDarkThick		= "vrGlassTintedDarkThick";
+	string $glassTintBlackDarkThin		= "vrGlassTintedDarkThin";
+	string $glassTintBlackLightThick	= "vrGlassTintedLightThick";
+	string $glassTintBlackLightThin		= "vrGlassTintedLightThin";
+
+	string $windowBin					= "carWindowGlass";
+	
+	string $materialList[] = { $glassTintBlackOpaque,
+							$glassTintBlackDarkThick,
+							$glassTintBlackDarkThin,
+							$glassTintBlackLightThick,
+							$glassTintBlackLightThin
+							};
+							
+	// Check if window shader exists - if not create it - add to window bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			shadingNode -n $material -asShader VRayMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+		}
+		select -r $material;
+		binMembership -add $windowBin;
+		
+		//Setup common settings
+		setAttr ($material+".color") -type double3 0.16 0.16 0.16 ;
+		setAttr ($material+".brdfType") 2;
+		setAttr ($material+".useFresnel") 1;
+		setAttr ($material+".reflectionColor") -type double3 0.9 0.9 0.9 ;
+	}
+}
+
+
+//
+//
+// Add window materials
+//
+//
+
+global proc spckMakePaintMaterials() {
+
+	string $paintSilver		= "VR_Paint_Silver";
+	string $paintWhite		= "VR_Paint_White";
+	string $paintBlack		= "VR_Paint_Black";
+	string $paintDarkGrey	= "VR_Paint_DarkGrey";
+	string $paintChampagne	= "VR_Paint_Champagne";
+	string $paintDarkRed	= "VR_Paint_DarkRed";
+	string $paintRed		= "VR_Paint_Red";
+	string $paintGreen		= "VR_Paint_Green";
+	string $paintBlue		= "VR_Paint_Blue";
+	string $paintNavy		= "VR_Paint_Navy";
+	string $paintYellow		= "VR_Paint_Yellow";	
+
+	string $paintBin 		= "Car_Paint";	
+	
+	string $materialList[] = { $paintSilver,
+							$paintWhite,
+							$paintBlack,
+							$paintDarkGrey,
+							$paintChampagne,
+							$paintDarkRed,
+							$paintRed,
+							$paintGreen,
+							$paintBlue,
+							$paintNavy,
+							$paintYellow
+							};
+							
+							
+	// Check if paint shader exists - if not create it - add to paint bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			// Create blend material
+			shadingNode -n $material -asShader VRayBlendMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+			
+			//create nodes for connection
+			shadingNode -n ($material+"_base") -asShader VRayCarPaintMtl;
+			shadingNode -n ($material+"_coat") -asShader VRayCarPaintMtl;
+
+			connectAttr -f ($material+"_base.outColor") ($material+".base_material");
+			connectAttr -f ($material+"_coat.outColor") ($material+".coat_material_0");
+			
+			shadingNode -n ($material+"_baseRamp") -asTexture ramp;
+			shadingNode -n ($material+"_coatRamp") -asTexture ramp;
+
+			shadingNode -n ($material+"_ramps_place2dTexture") -asUtility place2dTexture;
+			
+			shadingNode -n ($material+"_coatSampler") -asUtility samplerInfo;
+			shadingNode -n ($material+"_baseSurfaceLuma") -asUtility surfaceLuminance;
+			
+			//Connect everything up
+	
+			connectAttr -f ($material+"_coatSampler.facingRatio") ($material+"_coatRamp.vCoord");
+			connectAttr -f ($material+"_baseSurfaceLuma.outValue") ($material+"_baseRamp.vCoord");
+
+			connectAttr -f ($material+"_baseRamp.outColor") ($material+"_base.color");
+			connectAttr -f ($material+"_coatRamp.outColor") ($material+"_coat.color");
+
+			connectAttr -f ($material+"_ramps_place2dTexture.outUV") ($material+"_baseRamp.uvCoord");
+			connectAttr -f ($material+"_ramps_place2dTexture.outUvFilterSize") ($material+"_baseRamp.uvFilterSize");
+
+			connectAttr -f ($material+"_ramps_place2dTexture.outUV") ($material+"_coatRamp.uvCoord");
+			connectAttr -f ($material+"_ramps_place2dTexture.outUvFilterSize") ($material+"_coatRamp.uvFilterSize");
+
+			//Setup Ramps
+			
+			setAttr ($material+"_baseRamp.colorEntryList[0].position") 0;
+			setAttr ($material+"_baseRamp.colorEntryList[1].position") 0.4;
+			setAttr ($material+"_baseRamp.colorEntryList[2].position") 0.95;
+			setAttr ($material+"_baseRamp.colorEntryList[3].position") 1;
+
+			setAttr ($material+"_baseRamp.colorEntryList[0].color") -type double3 0.9 0.96 1;
+			setAttr ($material+"_baseRamp.colorEntryList[1].color") -type double3 0.27 0.27 0.3;
+			setAttr ($material+"_baseRamp.colorEntryList[2].color") -type double3 0.85 0.85 0.8;
+			setAttr ($material+"_baseRamp.colorEntryList[3].color") -type double3 0.9 0.9 0.86;
+
+			setAttr ($material+"_coatRamp.colorEntryList[0].position") 0;
+			setAttr ($material+"_coatRamp.colorEntryList[1].position") 0.4;
+			setAttr ($material+"_coatRamp.colorEntryList[2].position") 0.95;
+			setAttr ($material+"_coatRamp.colorEntryList[3].position") 1;
+
+			setAttr ($material+"_coatRamp.colorEntryList[0].color") -type double3 0.9 0.96 1;
+			setAttr ($material+"_coatRamp.colorEntryList[1].color") -type double3 0.27 0.27 0.3;
+			setAttr ($material+"_coatRamp.colorEntryList[2].color") -type double3 0.85 0.85 0.8;
+			setAttr ($material+"_coatRamp.colorEntryList[3].color") -type double3 0.9 0.9 0.86;
+
+			for ($i = 0; $i < 4 ; $i++ ) {
+				connectAttr -f ($material+"_coatRamp.colorEntryList["+$i+"].position") ($material+"_baseRamp.colorEntryList["+$i+"].position");
+				connectAttr -f ($material+"_coatRamp.colorEntryList["+$i+"].color") ($material+"_baseRamp.colorEntryList["+$i+"].color");
+			}
+		}
+		select -r $material;
+		binMembership -add $paintBin;
+	}
+	
+
+}
+
+

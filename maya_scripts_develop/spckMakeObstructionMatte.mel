@@ -1,0 +1,50 @@
+// spckMakeObstructionMatte_v0.1.mel
+//
+// By Daniel Harkness
+//
+// Make Obstruction Matte
+
+
+global proc spckMakeObstructionMatte() {
+
+	editRenderLayerMembers -remove -noRecurse "matteObstruction" `ls -dag`;					// Remove all objects
+	editRenderLayerMembers -noRecurse "matteObstruction" `ls -dag`;							// Add all objects
+	editRenderLayerGlobals -currentRenderLayer "matteObstruction";							// Set obstruction matte
+	
+	
+	// Make everything white
+	select -all;
+	sets -nw -e -forceElement ssMatteWhiteSG; // -nw is no warnings - roy says this applying the shader to the face and not the object
+
+	refresh;
+	
+	// Make cars black
+	string $allNS[] = `namespaceInfo -lon`;
+	string $alphabet[] = {"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"};
+	
+	for ( $ns in $allNS ) {
+		for ($letter in $alphabet) {
+			string $carNS = "Car"+$letter;
+			
+			if ( $carNS == $ns ) {
+				$carNS=$carNS+":*";
+				select -cl;
+				select -r $carNS;
+				sets -nw -e -forceElement ssMatteBlackSG; // -nw is no warnings - roy says this applying the shader to the face and not the object
+				refresh;
+			}
+		}
+	}
+		
+	// Give some feedback for next steps
+	
+	select -cl;
+
+	string $result = `confirmDialog 
+		-title "spckMakeObstructionMatte Success!"
+		-message "\nAll cars are black and all other objects are white on the render layer \"matteObstruction\""
+		-button "OK"
+		-defaultButton "OK"`;
+	print "Complete.\n";
+}
+

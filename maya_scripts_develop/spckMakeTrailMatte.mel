@@ -1,0 +1,224 @@
+// spckMakeTrailMatte_v0.1.mel
+//
+// By Daniel Harkness
+//
+// Make Trail Matte
+
+source "spckGetSelectedCar.mel";
+
+global proc spckMakeTrailMatte() {
+
+	// Return car name without namespace
+	string $car = spckGetSelectedCar ();	
+	if ( size($car) <= 0 ) {
+		print "Aborted.\n";
+		return;
+	}
+	
+	
+	// Check to see that the node is not a file reference
+    if ( `referenceQuery -isNodeReferenced $car` ) {
+    	confirmDialog -message "You need to rename your car in the original file. A reference cannot be renamed";
+    	print "Aborted.\n";
+		return;
+    }
+
+	string $renderLayerMatteLeftRightSplit 		= $car+"_matteLeftRightSplit";
+	string $renderLayerMatteLightRearParticleL 	= $car+"_matteLightRearParticleL";
+	string $renderLayerMatteLightRearParticleR 	= $car+"_matteLightRearParticleR";
+
+	
+	if (!objExists($renderLayerMatteLeftRightSplit)){
+    	confirmDialog -message "You need to have your left right matte set up first";
+    	print "Aborted.\n";
+		return;
+	}
+	
+	if (objExists($renderLayerMatteLightRearParticleL) || objExists($renderLayerMatteLightRearParticleR)){
+    	confirmDialog -message "The car may already be setup with trail mattes.";
+    	print "Aborted.\n";
+		return;
+	}
+		
+	//
+	//
+	// Setup custom render layers for car
+	//
+	//
+	
+	createRenderLayer -name $renderLayerMatteLightRearParticleL	 	-number 1 -empty;
+	createRenderLayer -name $renderLayerMatteLightRearParticleR	 	-number 1 -empty;	
+	
+	string $renderLayerCmd;
+	
+	editRenderLayerGlobals -currentRenderLayer $renderLayerMatteLightRearParticleL;
+
+	$renderLayerCmd = $renderLayerMatteLightRearParticleL+".renderable";
+	setAttr $renderLayerCmd 0;
+	editRenderLayerAdjustment "vraySettings.giOn";
+	setAttr "vraySettings.giOn" 0;
+	editRenderLayerAdjustment "vraySettings.relements_enableall";
+	setAttr "vraySettings.relements_enableall" 0;
+	
+	
+	editRenderLayerGlobals -currentRenderLayer $renderLayerMatteLightRearParticleR;
+
+	$renderLayerCmd = $renderLayerMatteLightRearParticleR+".renderable";
+	setAttr $renderLayerCmd 0;
+	editRenderLayerAdjustment "vraySettings.giOn";
+	setAttr "vraySettings.giOn" 0;
+	editRenderLayerAdjustment "vraySettings.relements_enableall";
+	setAttr "vraySettings.relements_enableall" 0;
+
+
+	
+	// ===================================================================================
+	// Setup shaders for left hand side ==================================================
+	// ===================================================================================
+			
+	// Make  surface shader and connect to 3d textureDisplacePlane 
+	
+	shadingNode -n ($car+"_ssMatteGreenLeftOnly") -asShader surfaceShader;
+	sets -renderable true -noSurfaceShader true -empty -name ($car+"_ssMatteGreenLeftOnlySG");
+	connectAttr -f ($car+"_ssMatteGreenLeftOnly.outColor") ($car+"_ssMatteGreenLeftOnlySG.surfaceShader");
+	
+	// Setup connections to the colour parameter of surface shader
+		
+	shadingNode -n ($car+"_ssMatteGreenLeftOnly_ColourProjection") -asTexture projection;
+	shadingNode -n ($car+"_ssMatteGreenLeftOnly_ColourRamp") -asTexture ramp;
+	shadingNode -n ($car+"_ssMatteGreenLeftOnly_Colour_place2dTexture") -asUtility place2dTexture;
+
+	connectAttr ($car+"_splitCar_place3dTexture.wim[0]") ($car+"_ssMatteGreenLeftOnly_ColourProjection.pm");
+	connectAttr ($car+"_ssMatteGreenLeftOnly_ColourRamp.outColor") ($car+"_ssMatteGreenLeftOnly_ColourProjection.image");
+	
+	connectAttr ($car+"_ssMatteGreenLeftOnly_Colour_place2dTexture.outUV") ($car+"_ssMatteGreenLeftOnly_ColourRamp.uv");
+	connectAttr ($car+"_ssMatteGreenLeftOnly_Colour_place2dTexture.outUvFilterSize") ($car+"_ssMatteGreenLeftOnly_ColourRamp.uvFilterSize");
+	connectAttr -force ($car+"_ssMatteGreenLeftOnly_ColourProjection.outColor") ($car+"_ssMatteGreenLeftOnly.outColor");
+
+	// Setup connections to the opacity parameter of surface shader
+		
+	shadingNode -n ($car+"_ssMatteGreenLeftOnly_OpacityProjection") -asTexture projection;
+	shadingNode -n ($car+"_ssMatteGreenLeftOnly_OpacityRamp") -asTexture ramp;
+	shadingNode -n ($car+"_ssMatteGreenLeftOnly_Opacity_place2dTexture") -asUtility place2dTexture;
+
+	connectAttr ($car+"_splitCar_place3dTexture.wim[0]") ($car+"_ssMatteGreenLeftOnly_OpacityProjection.pm");
+	connectAttr ($car+"_ssMatteGreenLeftOnly_OpacityRamp.outColor") ($car+"_ssMatteGreenLeftOnly_OpacityProjection.image");
+	
+	connectAttr ($car+"_ssMatteGreenLeftOnly_Opacity_place2dTexture.outUV") ($car+"_ssMatteGreenLeftOnly_OpacityRamp.uv");
+	connectAttr ($car+"_ssMatteGreenLeftOnly_Opacity_place2dTexture.outUvFilterSize") ($car+"_ssMatteGreenLeftOnly_OpacityRamp.uvFilterSize");
+	connectAttr -force ($car+"_ssMatteGreenLeftOnly_OpacityProjection.outColor") ($car+"_ssMatteGreenLeftOnly.outMatteOpacity");
+
+	// Setup Ramps
+
+	
+	setAttr ($car+"_ssMatteGreenLeftOnly_ColourRamp.interpolation") 0;
+	setAttr ($car+"_ssMatteGreenLeftOnly_ColourRamp.type") 1;
+	removeMultiInstance -break true ($car+"_ssMatteGreenLeftOnly_ColourRamp.colorEntryList[2]");
+	setAttr ($car+"_ssMatteGreenLeftOnly_ColourRamp.colorEntryList[0].color") -type double3 0 0 0 ;
+	setAttr ($car+"_ssMatteGreenLeftOnly_ColourRamp.colorEntryList[1].color") -type double3 0 1 0 ;
+	setAttr ($car+"_ssMatteGreenLeftOnly_ColourRamp.colorEntryList[1].position") 0.0;
+	setAttr ($car+"_ssMatteGreenLeftOnly_ColourRamp.colorEntryList[1].position") 0.5;
+
+	setAttr ($car+"_ssMatteGreenLeftOnly_OpacityRamp.interpolation") 0;
+	setAttr ($car+"_ssMatteGreenLeftOnly_OpacityRamp.type") 1;
+	removeMultiInstance -break true ($car+"_ssMatteGreenLeftOnly_OpacityRamp.colorEntryList[2]");
+	setAttr ($car+"_ssMatteGreenLeftOnly_OpacityRamp.colorEntryList[0].color") -type double3 0 0 0 ;
+	setAttr ($car+"_ssMatteGreenLeftOnly_OpacityRamp.colorEntryList[1].color") -type double3 1 1 1 ;
+	setAttr ($car+"_ssMatteGreenLeftOnly_OpacityRamp.colorEntryList[1].position") 0.0;
+	setAttr ($car+"_ssMatteGreenLeftOnly_OpacityRamp.colorEntryList[1].position") 0.5;
+
+
+	// ===================================================================================
+	// Setup shaders for right hand side =================================================
+	// ===================================================================================
+			
+	// Make  surface shader and connect to 3d textureDisplacePlane 
+	
+	shadingNode -n ($car+"_ssMatteRedRightOnly") -asShader surfaceShader;
+	sets -renderable true -noSurfaceShader true -empty -name ($car+"_ssMatteRedRightOnlySG");
+	connectAttr -f ($car+"_ssMatteRedRightOnly.outColor") ($car+"_ssMatteRedRightOnlySG.surfaceShader");
+	
+	// Setup connections to the colour parameter of surface shader
+		
+	shadingNode -n ($car+"_ssMatteRedRightOnly_ColourProjection") -asTexture projection;
+	shadingNode -n ($car+"_ssMatteRedRightOnly_ColourRamp") -asTexture ramp;
+	shadingNode -n ($car+"_ssMatteRedRightOnly_Colour_place2dTexture") -asUtility place2dTexture;
+
+	connectAttr -f ($car+"_splitCar_place3dTexture.wim[0]") ($car+"_ssMatteRedRightOnly_ColourProjection.pm");
+	connectAttr ($car+"_ssMatteRedRightOnly_ColourRamp.outColor") ($car+"_ssMatteRedRightOnly_ColourProjection.image");
+	
+	connectAttr ($car+"_ssMatteRedRightOnly_Colour_place2dTexture.outUV") ($car+"_ssMatteRedRightOnly_ColourRamp.uv");
+	connectAttr ($car+"_ssMatteRedRightOnly_Colour_place2dTexture.outUvFilterSize") ($car+"_ssMatteRedRightOnly_ColourRamp.uvFilterSize");
+	connectAttr -force ($car+"_ssMatteRedRightOnly_ColourProjection.outColor") ($car+"_ssMatteRedRightOnly.outColor");
+
+	// Setup connections to the opacity parameter of surface shader
+		
+	shadingNode -n ($car+"_ssMatteRedRightOnly_OpacityProjection") -asTexture projection;
+	shadingNode -n ($car+"_ssMatteRedRightOnly_OpacityRamp") -asTexture ramp;
+	shadingNode -n ($car+"_ssMatteRedRightOnly_Opacity_place2dTexture") -asUtility place2dTexture;
+
+	connectAttr ($car+"_splitCar_place3dTexture.wim[0]") ($car+"_ssMatteRedRightOnly_OpacityProjection.pm");
+	connectAttr ($car+"_ssMatteRedRightOnly_OpacityRamp.outColor") ($car+"_ssMatteRedRightOnly_OpacityProjection.image");
+	
+	connectAttr ($car+"_ssMatteRedRightOnly_Opacity_place2dTexture.outUV") ($car+"_ssMatteRedRightOnly_OpacityRamp.uv");
+	connectAttr ($car+"_ssMatteRedRightOnly_Opacity_place2dTexture.outUvFilterSize") ($car+"_ssMatteRedRightOnly_OpacityRamp.uvFilterSize");
+	connectAttr -force ($car+"_ssMatteRedRightOnly_OpacityProjection.outColor") ($car+"_ssMatteRedRightOnly.outMatteOpacity");
+
+	// Setup Ramps
+
+	
+	setAttr ($car+"_ssMatteRedRightOnly_ColourRamp.interpolation") 0;
+	setAttr ($car+"_ssMatteRedRightOnly_ColourRamp.type") 1;
+	removeMultiInstance -break true ($car+"_ssMatteRedRightOnly_ColourRamp.colorEntryList[2]");
+	setAttr ($car+"_ssMatteRedRightOnly_ColourRamp.colorEntryList[0].color") -type double3 1 0 0 ;
+	setAttr ($car+"_ssMatteRedRightOnly_ColourRamp.colorEntryList[1].color") -type double3 0 0 0 ;
+	setAttr ($car+"_ssMatteRedRightOnly_ColourRamp.colorEntryList[1].position") 0.0;
+	setAttr ($car+"_ssMatteRedRightOnly_ColourRamp.colorEntryList[1].position") 0.5;
+
+	setAttr ($car+"_ssMatteRedRightOnly_OpacityRamp.interpolation") 0;
+	setAttr ($car+"_ssMatteRedRightOnly_OpacityRamp.type") 1;
+	removeMultiInstance -break true ($car+"_ssMatteRedRightOnly_OpacityRamp.colorEntryList[2]");
+	setAttr ($car+"_ssMatteRedRightOnly_OpacityRamp.colorEntryList[0].color") -type double3 1 1 1 ;
+	setAttr ($car+"_ssMatteRedRightOnly_OpacityRamp.colorEntryList[1].color") -type double3 0 0 0 ;
+	setAttr ($car+"_ssMatteRedRightOnly_OpacityRamp.colorEntryList[1].position") 0.0;
+	setAttr ($car+"_ssMatteRedRightOnly_OpacityRamp.colorEntryList[1].position") 0.5;
+
+	
+	editRenderLayerGlobals -currentRenderLayer $renderLayerMatteLightRearParticleL;						// Set left particle matte
+	editRenderLayerMembers -noRecurse $renderLayerMatteLightRearParticleL ($car+"_Taillight");			//Add car objects
+
+	select -r ($car+"_Taillight");
+	sets -e -forceElement ($car+"_ssMatteGreenLeftOnlySG");
+	select -cl;
+	refresh;
+
+	editRenderLayerGlobals -currentRenderLayer $renderLayerMatteLightRearParticleR;						// Set right particle matte
+	editRenderLayerMembers -noRecurse $renderLayerMatteLightRearParticleR ($car+"_Taillight");			//Add car objects
+
+	select -r ($car+"_Taillight");
+	sets -e -forceElement ($car+"_ssMatteRedRightOnlySG");
+	select -cl;
+	refresh;
+
+	select -r ($car+"_ssMatteRedRightOnly");
+	binMembership -add "mattes";
+	binMembership -add "mattesCarSpecific";
+	
+	select -r ($car+"_ssMatteGreenLeftOnly");
+	binMembership -add "mattes";
+	binMembership -add "mattesCarSpecific";
+
+
+	// Give some feedback for next steps
+	
+	select -cl;
+	refresh;
+
+	string $result = `confirmDialog 
+		-title "matteMakeTrailMatte Success!"
+		-message ("\n"+$car+" has been split down the middle on matte \"matteLeftRightSplit\".\n\nYou'll probably want to remove any centre lights or fog-style taillights.")
+		-button "OK"
+		-defaultButton "OK"`;
+	print "Complete.\n";
+}
+

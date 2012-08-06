@@ -1,0 +1,59 @@
+// spckCreateShadingRig_v0.2.mel
+//
+// By Daniel Harkness
+//
+// Setup scene according to car kit guidelines
+
+
+
+//
+//
+// Make A rig to help with shading cars
+//
+//
+
+global proc spckCreateShadingRig() {
+
+	$rig			= "spckShadingRig";
+	$floor  		= "ssrFloor";
+	$vrDomeLight 	= "ssrVrayDomeLight";
+	$sphere			= "ssrSphere";
+	
+	if (objExists($rig)) {
+		confirmDialog -message "A SPCK shading rig already exists in the scene.";
+		print "Aborted.\n";
+		return;
+	}
+
+	// Make a floor
+	vrayCreatePlane;
+	rename ($floor+"Shape");
+	pickWalk -direction up;
+	rename ($floor);
+	setAttr ($floor+"Shape.locatorScale") 100;
+
+	// Make some spheres
+	
+	polySphere -n ($sphere+"1") -ch on -o on -r 50 ;
+	polySphere -n ($sphere+"2") -ch on -o on -r 50 ;
+	polySphere -n ($sphere+"3") -ch on -o on -r 50 ;
+	
+	move -a 0 50 150 ($sphere+"1");
+	move -a 0 50 0 ($sphere+"2");
+	move -a 0 50 -150 ($sphere+"3");
+
+	// Make Area Light for basic stuff
+	createNode "transform" -n $vrDomeLight;
+	shadingNode -name ($vrDomeLight+"Shape") -asLight VRayLightDomeShape -parent $vrDomeLight;
+	setAttr ($vrDomeLight+".translateY") 150;
+	setAttr ($vrDomeLight+"Shape.invisible") 1;
+	
+	setAttr ($vrDomeLight+"Shape.colorMode") 1;
+	setAttr ($vrDomeLight+"Shape.useDomeTex") 1;
+	setAttr ($vrDomeLight+"Shape.locatorScale") 10;
+	
+	// Group everything
+	group -name $rig $vrDomeLight $floor ($sphere+"1") ($sphere+"2") ($sphere+"3");
+	
+}
+

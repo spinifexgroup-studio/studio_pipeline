@@ -1,0 +1,229 @@
+// spckSetupScene_v0.9.mel
+//
+// By Daniel Harkness
+//
+// Setup scene according to car kit guidelines
+
+source "spckMakeMaterials.mel";
+
+global proc spckSetupScene() {
+
+	// Set up some variables
+
+	int $spckDefaultWidth = 1920;
+	int $spckDefaultHeight= 720;
+	
+	string $renderLayerVehicle 					= "vehicle";
+	string $renderLayerBackground 				= "background";
+	string $renderLayerMatteObstruction 		= "matteObstruction";
+	string $renderLayerMatteLightDetails 		= "matteLightDetails";
+	
+	// Check if we haven't done this before
+	
+	string $select[] 			= `ls`;
+
+	for ( $node in $select )     // process each selection
+	{
+		if ( $node == "vraySettings" )
+		{
+			if ( `getAttr "vraySettings.spckSetupScene"` ) {
+				print("We've done this before.....\n");
+				return;
+			}
+		}
+	}
+
+	
+	// Check that everything is setup correctly before continuing.
+	
+	string $result = `confirmDialog 
+		-title "spckSetupScene"
+		-message "Have you set up your workspace.mel?"
+		-button "YES" -button "NO"
+		-defaultButton "YES" -cancelButton "NO"
+		-dismissString "NO"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "NO") {
+		print("Go setup your workspace and run again.\n");
+		return;
+	}
+
+	currentUnit -l "cm";
+	currentUnit -a "deg";
+	currentUnit -t "ntsc";
+
+	//Loads vray if not yet active
+	
+	if(!`pluginInfo -query -loaded -name "vrayformaya"`) {
+		loadPlugin vrayformaya;
+		pluginInfo -edit -autoload true vrayformaya;
+	}
+	
+	//sets Renderer to vray
+	
+	setAttr "defaultRenderGlobals.currentRenderer" -type "string" "vray";
+	unifiedRenderGlobalsWindow;
+	
+	//Setup some vray attributes:
+	
+	setAttr defaultRenderGlobals.animation 1;
+	setAttr "vraySettings.aspectLock" 0;
+
+	setAttr vraySettings.animBatchOnly 1;
+	setAttr vraySettings.vfbOn 1;
+	setAttr vraySettings.imageFormatStr -type "string" "exr";		//sets vray to single channel exr
+	setAttr vraySettings.giOn 1;
+	setAttr vraySettings.relements_separateFolders 1;
+	setAttr defaultResolution.width $spckDefaultWidth;
+	setAttr defaultResolution.height $spckDefaultHeight;
+	setAttr vraySettings.width $spckDefaultWidth;
+	setAttr vraySettings.height $spckDefaultHeight;
+	setAttr vraySettings.samplerType 2;
+	setAttr vraySettings.sys_low_thread_priority 1;
+	setAttr defaultResolution.deviceAspectRatio ($spckDefaultWidth/float($spckDefaultHeight));
+	setAttr vraySettings.aspectRatio ($spckDefaultWidth/float($spckDefaultHeight));
+	
+	//Setup Linear Workflow
+	setAttr vraySettings.cmap_linearworkflow 0;
+	setAttr vraySettings.cmap_adaptationOnly 1;
+	setAttr vraySettings.cmap_gamma 2.2;
+	setAttr vraySettings.sRGBOn 1;
+	setAttr vraySettings.cmap_affectBackground 1;
+
+	//Add render elements
+
+	vrayAddRenderElement diffuseChannel;
+	vrayAddRenderElement reflectChannel;
+	vrayAddRenderElement refractChannel;
+	vrayAddRenderElement specularChannel;
+	vrayAddRenderElement lightingChannel;
+	vrayAddRenderElement giChannel;
+	vrayAddRenderElement zdepthChannel;
+	vrayAddRenderElement normalsChannel;
+	
+	setAttr "vrayRE_Z_depth.vray_depthFromCamera_zdepth" 1;
+	setAttr "vrayRE_Z_depth.vray_depthClamp" 0;
+	
+	// Turn off render elements - these are the common ones we turn back on if needed
+
+	setAttr "vrayRE_Diffuse.enabled" 			0;
+	setAttr "vrayRE_GI.enabled" 				0;
+	setAttr "vrayRE_Lighting.enabled" 			0;
+	setAttr "vrayRE_Normals.enabled" 			0;
+	setAttr "vrayRE_Reflection.enabled" 		0;
+	setAttr "vrayRE_Refraction.enabled" 		0;
+	setAttr "vrayRE_Specular.enabled" 			0;
+	setAttr "vrayRE_Z_depth.enabled" 			0;
+	
+	// Create default layers for car work
+
+	createRenderLayer -name $renderLayerVehicle 					-number 1 -empty;
+	createRenderLayer -name $renderLayerBackground 					-number 1 -empty;
+	createRenderLayer -name $renderLayerMatteObstruction 			-number 1 -empty;
+	createRenderLayer -name $renderLayerMatteLightDetails	 		-number 1 -empty;
+	
+	
+	// Setup Multimattes
+	
+	vrayAddRenderElement MultiMatteElement;
+	rename vrayRE_Multi_Matte "vrayRE_Multi_Matte_Main";
+
+	vrayAddRenderElement MultiMatteElement;
+	rename vrayRE_Multi_Matte "vrayRE_Multi_Matte_Lights";
+	
+	vrayAddRenderElement MultiMatteElement;
+	rename vrayRE_Multi_Matte "vrayRE_Multi_Matte_Parts";
+
+	setAttr -type "string" vrayRE_Multi_Matte_Main.vray_name_multimatte "multimatte_main";
+	setAttr -type "string" vrayRE_Multi_Matte_Lights.vray_name_multimatte "multimatte_lights";
+	setAttr -type "string" vrayRE_Multi_Matte_Parts.vray_name_multimatte "multimatte_parts";
+
+	setAttr "vrayRE_Multi_Matte_Main.vray_redid_multimatte" 		1;
+	setAttr "vrayRE_Multi_Matte_Main.vray_greenid_multimatte" 		2;
+	setAttr "vrayRE_Multi_Matte_Main.vray_blueid_multimatte" 		3;
+	setAttr "vrayRE_Multi_Matte_Main.vray_usematid_multimatte" 		1;
+	
+	setAttr "vrayRE_Multi_Matte_Lights.vray_redid_multimatte" 		4;
+	setAttr "vrayRE_Multi_Matte_Lights.vray_greenid_multimatte" 	5;
+	setAttr "vrayRE_Multi_Matte_Lights.vray_blueid_multimatte" 		6;
+	setAttr "vrayRE_Multi_Matte_Lights.vray_usematid_multimatte" 	0;
+
+	setAttr "vrayRE_Multi_Matte_Parts.vray_redid_multimatte" 		7;
+	setAttr "vrayRE_Multi_Matte_Parts.vray_greenid_multimatte" 		8;
+	setAttr "vrayRE_Multi_Matte_Parts.vray_blueid_multimatte" 		9;
+	setAttr "vrayRE_Multi_Matte_Parts.vray_usematid_multimatte" 	1;
+
+	
+	// Make overrides for matte channels
+	
+	string $renderLayerCmd;
+
+	editRenderLayerGlobals -currentRenderLayer $renderLayerMatteLightDetails;
+
+	$renderLayerCmd = $renderLayerMatteLightDetails+".renderable";
+	setAttr $renderLayerCmd 0;
+	editRenderLayerAdjustment "vraySettings.giOn";
+	setAttr "vraySettings.giOn" 0;
+	editRenderLayerAdjustment "vraySettings.relements_enableall";
+	setAttr "vraySettings.relements_enableall" 0;
+
+
+	editRenderLayerGlobals -currentRenderLayer $renderLayerMatteObstruction;
+	
+	$renderLayerCmd = $renderLayerMatteObstruction+".renderable";
+	setAttr $renderLayerCmd 0;	
+	editRenderLayerAdjustment "vraySettings.giOn";
+	setAttr "vraySettings.giOn" 0;
+	editRenderLayerAdjustment "vraySettings.relements_enableall";
+	setAttr "vraySettings.relements_enableall" 0;
+	
+	
+	// Add spck custom attribute to check off that we have set up the scene
+	
+	select -r vraySettings ;
+	addAttr -ln "spckSetupScene"  -at bool  vraySettings;
+	setAttr "vraySettings.spckSetupScene" 1;
+
+	
+	//	Close render window, select nothing and return to default render layer 
+	
+	window -e -vis 0 unifiedRenderGlobalsWindow;
+	editRenderLayerGlobals -currentRenderLayer "defaultRenderLayer";
+	select -cl;
+	
+	// Setup some materials that can be used for matte functions
+
+	spckMakeMatteMaterials();
+
+	/*
+	//	set up some scale reference
+	
+	string $referenceCube = "a_100cm_X_100cm_reference_cube";
+	polyCube -w 100 -d 100 -h 100 -name $referenceCube;
+	move 0 50 0 $referenceCube;
+	
+	
+	// Setup a camera reference
+	
+	string $referenceCamera = "shXXX0_reference_camera";
+	
+	camera -centerOfInterest 5 -focalLength 35 -lensSqueezeRatio 1 -cameraScale 1 -horizontalFilmAperture 1.4173 -horizontalFilmOffset 0 -verticalFilmAperture 0.9449 -verticalFilmOffset 0 -filmFit Fill -overscan 1 -motionBlur 0 -shutterAngle 144 -nearClipPlane 0.1 -farClipPlane 10000 -orthographic 0 -orthographicWidth 30 -panZoomEnabled 0 -horizontalPan 0 -verticalPan 0 -zoom 1; objectMoveCommand; cameraMakeNode 1 "";
+	rename "camera1" $referenceCamera;
+	scale 10 10 10 $referenceCamera;
+	*/
+	
+	// Give some feedback for next steps
+	
+	select -cl;
+
+	
+	string $result = `confirmDialog 
+		-title "spckSetupScene Success!"
+		-message "Your linear units are set to centimetres.\n\nYour time units are set to 30fps for USA.\n\nSuggested next steps:\n\n- Read the maya section of car kit at http://wiki/index.php/motion"
+		-button "OK"
+		-defaultButton "OK"`;
+	print "Complete.\n";
+}
+
+

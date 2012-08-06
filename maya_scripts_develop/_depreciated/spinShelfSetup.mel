@@ -1,0 +1,48 @@
+// ===============================================================================================================
+// Set up shelves for spinifex scripts.
+// ===============================================================================================================
+
+string $newName = "Spinifex";
+string $fileName = ( `internalVar -userShelfDir` + "shelf_" + $newName + ".mel" );
+
+int $addShelf = true;
+if( `file -q -exists $fileName` )
+	$addShelf = false;
+else
+{
+	addNewShelfTab $newName;
+
+	// ===============================================================================================================
+	// Adds shelf buttons for import/export chan.
+	// ===============================================================================================================
+	
+	source "ImportExportChan";
+	
+	string $newButton = "exportCamChan";
+	shelfButton -parent $newName -annotation $newButton -image1 "commandButton.xpm" -command ("exportCamChan");
+	
+	string $newButton = "exportObjChan";
+	shelfButton -parent $newName -annotation $newButton -image1 "commandButton.xpm" -command ("exportObjChan");
+	
+	string $newButton = "importCamChan";
+	shelfButton -parent $newName -annotation $newButton -image1 "commandButton.xpm" -command ("importCamChan");
+	
+	string $newButton = "importObjChan";
+	shelfButton -parent $newName -annotation $newButton -image1 "commandButton.xpm" -command ("importObjChan");
+	
+	
+	
+	// ===============================================================================================================
+	// Adds shelf buttons for spinifex Car Kit.
+	// ===============================================================================================================
+	
+	source "spckAddCar";
+	
+	string $newButton = "spckAddCar";
+	shelfButton -parent $newName -annotation $newButton -image1 "commandButton.xpm" -command ("spckAddCar");
+	
+	//source "spck_make_aepx";
+	//string $newButton = "spck_make_aepx";
+	//shelfButton -parent $newName -annotation $newButton -image1 "commandButton.xpm" -command ("spck_make_aepx");	
+
+}

@@ -1,0 +1,75 @@
+// spinBoundingBoxFuncs_v0.1.mel
+//
+// Bounding box functions
+//
+// By Daniel Harkness
+
+// The following code will create a dialogue box allowing the user
+// to input the name of the car he is working on.
+
+
+
+// Get boundry coordinates of selection
+
+global proc float[] getAnimatedBoundsForMeshes( string $skinList[] ) {
+
+	float $bounds[];
+	float $skinMinBoundsX[];
+	float $skinMinBoundsY[];
+	float $skinMinBoundsZ[];
+	float $skinMaxBoundsX[];
+	float $skinMaxBoundsY[];
+	float $skinMaxBoundsZ[];
+	
+	
+	for( $skin in $skinList ) {
+		$skinMinBoundsX[( `size $skinMinBoundsX` )] = `getAttr ( $skin + ".boundingBoxMinX" )`;
+		$skinMinBoundsY[( `size $skinMinBoundsY` )] = `getAttr ( $skin + ".boundingBoxMinY" )`;
+		$skinMinBoundsZ[( `size $skinMinBoundsZ` )] = `getAttr ( $skin + ".boundingBoxMinZ" )`;
+		$skinMaxBoundsX[( `size $skinMaxBoundsX` )] = `getAttr ( $skin + ".boundingBoxMaxX" )`;
+		$skinMaxBoundsY[( `size $skinMaxBoundsY` )] = `getAttr ( $skin + ".boundingBoxMaxY" )`;
+		$skinMaxBoundsZ[( `size $skinMaxBoundsZ` )] = `getAttr ( $skin + ".boundingBoxMaxZ" )`;		
+	}
+	
+	$skinMinBoundsX = `sort $skinMinBoundsX`;
+	$skinMinBoundsY = `sort $skinMinBoundsY`;
+	$skinMinBoundsZ = `sort $skinMinBoundsZ`;
+	$skinMaxBoundsX = `sort $skinMaxBoundsX`;
+	$skinMaxBoundsY = `sort $skinMaxBoundsY`;
+	$skinMaxBoundsZ = `sort $skinMaxBoundsZ`;
+	
+	$bounds[0] = $skinMinBoundsX[0];
+	$bounds[1] = $skinMinBoundsY[0];
+	$bounds[2] = $skinMinBoundsZ[0];
+	$bounds[3] = $skinMaxBoundsX[( `size $skinMaxBoundsX` - 1 )];
+	$bounds[4] = $skinMaxBoundsY[( `size $skinMaxBoundsY` - 1 )];
+	$bounds[5] = $skinMaxBoundsZ[( `size $skinMaxBoundsZ` - 1 )];
+	
+	return $bounds;
+}
+
+// Get boundry coordinates of selection
+
+global proc float[] getAnimatedSizeForMeshes( string $skinList[] ) {
+
+	float $bounds[];
+	float $skinSizeBoundsX[];
+	float $skinSizeBoundsY[];
+	float $skinSizeBoundsZ[];	
+	
+	for( $skin in $skinList ) {
+		$skinSizeBoundsX[( `size $skinSizeBoundsX` )] = `getAttr ( $skin + ".boundingBoxSizeX" )`;
+		$skinSizeBoundsY[( `size $skinSizeBoundsY` )] = `getAttr ( $skin + ".boundingBoxSizeY" )`;
+		$skinSizeBoundsZ[( `size $skinSizeBoundsZ` )] = `getAttr ( $skin + ".boundingBoxSizeZ" )`;
+	}
+	
+	$skinSizeBoundsX = `sort $skinSizeBoundsX`;
+	$skinSizeBoundsY = `sort $skinSizeBoundsY`;
+	$skinSizeBoundsZ = `sort $skinSizeBoundsZ`;
+	
+	$bounds[0] = $skinSizeBoundsX[0];
+	$bounds[1] = $skinSizeBoundsY[0];
+	$bounds[2] = $skinSizeBoundsZ[0];
+	
+	return $bounds;
+}

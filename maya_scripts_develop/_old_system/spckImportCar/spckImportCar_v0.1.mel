@@ -1,0 +1,92 @@
+// spckRenameCar_v0.1.mel
+//
+// By Daniel Harkness
+
+// The following code will create a dialogue box allowing the user
+// to input the name of the car he is working on.
+
+// Names of car parts in strings
+
+global proc spckImportCar() {
+
+	// Check to see that scene is set up correctly first
+	int $shouldProceed = 0;
+	string $select[] 			= `ls`;
+
+	for ( $node in $select )     // process each selection
+	{
+		if ( $node == "vraySettings" )
+		{
+			if ( `getAttr "vraySettings.spckSetupScene"` ) {
+				$shouldProceed = 1;
+			}
+		}
+	}
+
+	if ($shouldProceed == 0){
+		confirmDialog -message "The scene hasn't been set up yet.....\n";
+		return;
+	}
+
+
+	string $selectedFiles[] = `fileDialog2 -fm 1 -ff "Maya Files (*.ma *.mb)" -dialogStyle 2 -okc "Open" -cc "Cancel" -cap "Select Car"`;
+	string $carNS;
+	
+	// Check we only have one item selected
+	if (size($selectedFiles) != 1) {
+		confirmDialog -message "You can only select one car to import";
+		print "Aborted.\n";
+		return;
+	}
+	string $selectedFile = $selectedFiles[0];
+
+	// Creating a dialogue box to request the car name namespace.
+	string $result = `promptDialog 
+		-title "spckImportCar"
+		-message "Enter letter for the car's namespace:"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+	
+		// Query the entry typed by the user and then use it for variable CarAString.
+		$carNS = `promptDialog -query -text`;
+		
+		if (size ($carNS) == 1) {
+			if (isValidString ($carNS, "([a-zA-Z]+)([a-zA-Z])*")){
+				$carNS = toupper ($carNS);
+				$carNS = "Car"+$carNS;
+				
+				string $allNS[] = `namespaceInfo -lon`;
+				
+				for ( $ns in $allNS ) {
+					if ( $carNS == $ns ) {
+						confirmDialog -message "The namespace already exists. Please re-run the script again."; print "Aborted.\n"; return;
+					}
+				}
+			}
+			else{
+				confirmDialog -message "Invalid Character. Please re-run the script again."; print "Aborted.\n"; return;
+			}
+		}
+		else{
+			confirmDialog -message "Invalid Character. Please re-run the script again."; print "Aborted.\n"; return;
+		}
+	}				  
+	else {
+		print "Aborted.\n"; return;
+	}
+
+	file -r -type "mayaBinary" -gl -loadReferenceDepth "all" -shd "displayLayers" -shd "shadingNetworks" -shd "renderLayersByName" -namespace $carNS -options "v=0" $selectedFile;
+	
+	select -cl;
+	
+	// Give some feedback for next steps
+	
+	string $message = "The car has been imported under the namespace "+$carNS;
+	
+	confirmDialog -message $message;
+	print "Complete.\n";
+}

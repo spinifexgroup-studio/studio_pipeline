@@ -1,0 +1,517 @@
+// spckCreateCarShaders_v0.2.mel
+//
+// By Daniel Harkness
+//
+// Setup scene according to car kit guidelines
+
+
+
+//
+//
+// Add all materials
+//
+//
+
+global proc spckMakeAllMaterials() {
+
+	spckMakeMatteMaterials();
+	spckMakePlasticMaterials();
+	spckMakeLightMaterials();
+	spckMakeMetalMaterials();
+	spckMakeChromeMaterials();
+	spckMakeWheelMaterials();
+	spckMakeBrakeMaterials();
+	spckMakeWindowMaterials();
+	spckMakePaintMaterials();
+
+}
+
+
+//
+//
+// Add essential mattes materials
+//
+//
+
+global proc spckMakeMatteMaterials() {
+
+	string $matteBlack 		= "ssMatteBlack";
+	string $matteWhite 		= "ssMatteWhite";
+	string $matteRed 		= "ssMatteRed";
+	string $matteGreen 		= "ssMatteGreen";
+	string $matteBlue 		= "ssMatteBlue";
+	
+	string $matteBin		= "mattes";
+	string $matteSolidBin   = "mattesSolid";
+	
+	// Check if matte shader exists - if not create it - add to mattes bin
+	
+	if (!objExists($matteBlack)){
+		shadingNode -n $matteBlack -asShader surfaceShader;
+		sets -renderable true -noSurfaceShader true -empty -name ($matteBlack+"SG");
+		connectAttr -f ($matteBlack+".outColor") ($matteBlack+"SG.surfaceShader");
+		setAttr ($matteBlack+".outColor") -type double3 0 0 0 ;
+	}
+	select -r $matteBlack;
+	binMembership -add $matteBin;
+	binMembership -add $matteSolidBin;
+	
+	// Check if matte shader exists - if not create it - add to mattes bin
+
+	
+	if (!objExists($matteWhite)){
+		shadingNode -n $matteWhite -asShader surfaceShader;
+		sets -renderable true -noSurfaceShader true -empty -name ($matteWhite+"SG");
+		connectAttr -f ($matteWhite+".outColor") ($matteWhite+"SG.surfaceShader");
+		setAttr ($matteWhite+".outColor") -type double3 1 1 1 ;
+	}
+	select -r $matteWhite;
+	binMembership -add $matteBin;
+	binMembership -add $matteSolidBin;
+
+	// Check if matte shader exists - if not create it - add to mattes bin
+	
+	
+	if (!objExists($matteRed)){
+		shadingNode -n $matteRed -asShader surfaceShader;
+		sets -renderable true -noSurfaceShader true -empty -name ($matteRed+"SG");
+		connectAttr -f ($matteRed+".outColor") ($matteRed+"SG.surfaceShader");
+		setAttr ($matteRed+".outColor") -type double3 1 0 0 ;
+	}
+	select -r $matteRed;
+	binMembership -add $matteBin;
+	binMembership -add $matteSolidBin;
+
+	// Check if matte shader exists - if not create it - add to mattes bin
+	
+	if (!objExists($matteGreen)){
+		shadingNode -n $matteGreen -asShader surfaceShader;
+		sets -renderable true -noSurfaceShader true -empty -name ($matteGreen+"SG");
+		connectAttr -f ($matteGreen+".outColor") ($matteGreen+"SG.surfaceShader");
+		setAttr ($matteGreen+".outColor") -type double3 0 1 0 ;
+	}
+	select -r $matteGreen;
+	binMembership -add $matteBin;
+
+	// Check if matte shader exists - if not create it - add to mattes bin
+	
+	if (!objExists($matteBlue)){
+		shadingNode -n $matteBlue -asShader surfaceShader;
+		sets -renderable true -noSurfaceShader true -empty -name ($matteBlue+"SG");
+		connectAttr -f ($matteBlue+".outColor") ($matteBlue+"SG.surfaceShader");
+		setAttr ($matteBlue+".outColor") -type double3 0 0 1 ;
+	}	binMembership -add $matteBin;
+	binMembership -add $matteSolidBin;
+
+	select -r $matteBlue;
+	binMembership -add $matteBin;
+	binMembership -add $matteSolidBin;
+}
+
+
+//
+//
+// Add essential plastic materials
+//
+//
+
+global proc spckMakePlasticMaterials() {
+
+	string $plasticBlackMatte 		= "vrPlasticBlackMatte";
+	string $plasticBlackGloss 		= "vrPlasticBlackGloss";
+	
+	string $plasticsBin				= "carPlastics";
+	string $partsBin				= "carParts";
+	
+	string $materialList[] = { $plasticBlackMatte,
+							$plasticBlackGloss
+							};
+
+	// Check if brake shader exists - if not create it - add to window bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			shadingNode -n $material -asShader VRayMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+		}
+		select -r $material;
+		binMembership -add $plasticsBin;
+		binMembership -add $partsBin;
+		
+		// Set colour
+		setAttr ($material+".color") -type double3 0.1 0.1 0.1 ;
+	}
+}
+
+//
+//
+// Add head and tailight materials
+//
+//
+
+global proc spckMakeLightMaterials() {
+
+	string $plasticClearThin		= "vrPlasticClearThin";
+	string $plasticClearThick		= "vrPlasticClearThick";
+	string $plasticClearRedThin		= "vrPlasticClearRedThin";
+	string $plasticClearRedThick	= "vrPlasticClearRedThick";
+	string $plasticClearOrangeThin	= "vrPlasticClearOrangeThin";
+	string $plasticClearOrangeThick	= "vrPlasticClearOrangeThick";
+	string $bulbClearThin			= "vrBulbClearThin";
+	string $bulbClearThick			= "vrBulbClearThick";
+
+	string $lightsBin		= "carLights";
+	
+	string $materialList[] = { $plasticClearThin,
+							$plasticClearThick,
+							$plasticClearRedThin,
+							$plasticClearRedThick,
+							$plasticClearOrangeThin,
+							$plasticClearOrangeThick,
+							$bulbClearThin,
+							$bulbClearThick
+							};
+						
+	// Check if brake shader exists - if not create it - add to window bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			shadingNode -n $material -asShader VRayMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+		}
+		select -r $material;
+		binMembership -add $lightsBin;
+	}
+	
+	// Setup Colour and refraction
+	
+	// Clear
+	setAttr ($plasticClearThin+".refractionColor") -type double3 1 1 1 ;
+	setAttr ($plasticClearThick+".refractionColor") -type double3 1 1 1 ;
+
+	// Red
+	setAttr ($plasticClearRedThin+".color") -type double3 1 0 0 ;
+	setAttr ($plasticClearRedThick+".color") -type double3 1 0 0 ;
+	setAttr ($plasticClearRedThin+".refractionColor") -type double3 1 0 0 ;
+	setAttr ($plasticClearRedThick+".refractionColor") -type double3 1 0 0 ;
+
+	// Orange
+	setAttr ($plasticClearOrangeThin+".color") -type double3 1 0.35 0 ;
+	setAttr ($plasticClearOrangeThick+".color") -type double3 1 0.35 0 ;
+	setAttr ($plasticClearOrangeThin+".refractionColor") -type double3 1 0.35 0 ;
+	setAttr ($plasticClearOrangeThick+".refractionColor") -type double3 1 0.35 0 ;
+	
+	// Light Bulb
+	setAttr ($bulbClearThin+".refractionColor") -type double3 1 1 1 ;
+	setAttr ($bulbClearThick+".refractionColor") -type double3 1 1 1 ;
+
+}
+
+
+//
+//
+// Add metal materials
+//
+//
+
+global proc spckMakeMetalMaterials() {
+
+	string $metalUnderCarriage	= "vrMetalUnderCarriage";
+	string $metalBlackGloss		= "vrMetalBlackGloss";
+	string $metalBlackMatte		= "vrMetalBlackMatte";
+	string $metalSteelGloss		= "vrMetalSteelGloss";
+	string $metalSteelMatte		= "vrMetalSteelMatte";
+	
+	string $metalBin		= "carMetal";
+	string $partsBin		= "carParts";
+
+	string $materialList[] = { $metalUnderCarriage,
+							$metalBlackGloss,
+							$metalBlackMatte,
+							$metalSteelGloss,
+							$metalSteelMatte
+							};
+							
+	// Check if brake shader exists - if not create it - add to window bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			shadingNode -n $material -asShader VRayMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+		}
+		select -r $material;
+		binMembership -add $metalBin;
+		
+		// Add everything except undercarriage to the parts bin
+		if ($material != $metalUnderCarriage){
+			binMembership -add $partsBin;
+		}
+	}
+	
+	// Setup Black
+	
+	setAttr ($metalBlackGloss+".color") -type double3 0.1 0.1 0.1 ;
+	setAttr ($metalBlackMatte+".color") -type double3 0.1 0.1 0.1 ;
+
+	// Setup Steel
+	
+	setAttr ($metalSteelGloss+".color") -type double3 0.5 0.5 0.5 ;
+	setAttr ($metalSteelMatte+".color") -type double3 0.5 0.5 0.5 ;
+	
+	// Setup Glossies
+	
+	// Setup Mattes
+}
+
+//
+//
+// Add chrome materials
+//
+//
+
+global proc spckMakeChromeMaterials() {
+
+	string $chrome			= "vrChrome";
+	string $chromeBlue		= "vrChromeBlue";
+	string $chromeBright	= "vrChromeBright";
+
+	string $chromeBin		= "carChrome";
+	string $lightsBin		= "carLights";
+	string $partsBin		= "carParts";
+
+	string $materialList[] = { $chrome,
+							$chromeBlue,
+							$chromeBright
+							};
+							
+	// Check if brake shader exists - if not create it - add to window bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			shadingNode -n $material -asShader VRayMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+		}
+		select -r $material;
+		binMembership -add $chromeBin;
+		binMembership -add $lightsBin;
+	
+		setAttr ($material+".reflectionColor") -type double3 0.9 0.9 0.9 ;
+		setAttr ($material+".brdfType") 2;
+	}
+	
+	// Add specific chromes to bins
+	select -r $chrome;
+	binMembership -add $partsBin;
+	
+	// Setup Blue Chrome
+	setAttr ($chromeBlue+".color") -type double3 0.5 0.7 0.9 ;
+	setAttr ($chromeBlue+".reflectionColor") -type double3 0.5 0.7 0.9 ;
+	
+	// Setup Bright Chrome
+	setAttr ($chromeBlue+".illumColor") -type double3 0.15 0.15 0.15 ;
+}
+
+//
+//
+// Add Wheel materials
+//
+//
+
+global proc spckMakeWheelMaterials() {
+
+	string $alloyMatte		= "vrAlloyMatte";
+	string $alloyGloss		= "vrAlloyGloss";
+	string $tyreMatte		= "vrTyreMatte";
+	string $tyreGloss		= "vrTyreGloss";
+
+	string $wheelBin		= "carWheels";
+	
+	string $materialList[] = { $alloyMatte,
+							$alloyGloss,
+							$tyreMatte,
+							$tyreGloss
+							};
+							
+	string $alloyList[] = { $alloyMatte,
+							$alloyGloss
+							};
+							
+	string $tyreList[] = { $tyreMatte,
+							$tyreGloss
+							};
+							
+	// Check if brake shader exists - if not create it - add to window bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			shadingNode -n $material -asShader VRayMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+		}
+		select -r $material;
+		binMembership -add $wheelBin;
+	}
+	
+	// Setup tyres
+	
+	for ($material in $tyreList){
+		setAttr ($material+".color") -type double3 0.1 0.1 0.1 ;
+	}
+	
+	// Setup alloys
+	
+	for ($material in $alloyList){
+		setAttr ($material+".color") -type double3 0.1 0.1 0.1 ;
+		setAttr ($material+".reflectionColor") -type double3 1 1 1 ;
+		setAttr ($material+".brdfType") 2;
+		setAttr ($material+".useFresnel") 1;
+		setAttr ($material+".refractionIOR") 10;
+	}
+
+}
+
+//
+//
+// Add brake materials
+//
+//
+
+global proc spckMakeBrakeMaterials() {
+
+	string $metalDisc			= "vrMetalBakeDisc";
+	string $metalCalliperSteel	= "vrMetalBrakeCalliperSteel";
+	string $metalCalliperRed	= "vrMetalBrakeCalliperRed";
+	string $metalCalliperBlue	= "vrMetalBrakeCalliperBlue";
+
+	string $brakeBin			= "carBrakes";
+	string $metalBin			= "carMetal";
+	
+	string $materialList[] = { $metalDisc,
+							$metalCalliperSteel,
+							$metalCalliperRed,
+							$metalCalliperBlue
+							};
+	
+	// Check if brake shader exists - if not create it - add to window bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			shadingNode -n $material -asShader VRayMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+		}
+		select -r $material;
+		binMembership -add $brakeBin;
+		binMembership -add $metalBin;
+	}
+	
+	
+	// Setup Colour
+	
+	setAttr ($metalCalliperBlue+".color") -type double3 0 0 1 ;
+	setAttr ($metalCalliperRed+".color") -type double3 1 0 0 ;
+}
+
+//
+//
+// Add window materials
+//
+//
+
+global proc spckMakeWindowMaterials() {
+
+	string $glassTintBlackOpaque		= "vrGlassTintedOpaque";
+	string $glassTintBlackDarkThick		= "vrGlassTintedDarkThick";
+	string $glassTintBlackDarkThin		= "vrGlassTintedDarkThin";
+	string $glassTintBlackLightThick	= "vrGlassTintedLightThick";
+	string $glassTintBlackLightThin		= "vrGlassTintedLightThin";
+
+	string $windowBin					= "carWindowGlass";
+	
+	string $materialList[] = { $glassTintBlackOpaque,
+							$glassTintBlackDarkThick,
+							$glassTintBlackDarkThin,
+							$glassTintBlackLightThick,
+							$glassTintBlackLightThin
+							};
+							
+	// Check if window shader exists - if not create it - add to window bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			shadingNode -n $material -asShader VRayMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+		}
+		select -r $material;
+		binMembership -add $windowBin;
+		
+		//Setup common settings
+		setAttr ($material+".color") -type double3 0.16 0.16 0.16 ;
+		setAttr ($material+".brdfType") 2;
+		setAttr ($material+".useFresnel") 1;
+		setAttr ($material+".reflectionColor") -type double3 0.9 0.9 0.9 ;
+	}
+}
+
+
+//
+//
+// Add window materials
+//
+//
+
+global proc spckMakePaintMaterials() {
+
+	string $paintSilver		= "vrPaintSilver";
+	string $paintWhite		= "vrPaintWhite";
+	string $paintBlack		= "vrPaintBlack";
+	string $paintDarkGrey	= "vrPaintDarkGrey";
+	string $paintChampagne	= "vrPaintChampagne";
+	string $paintDarkRed	= "vrPaintDarkRed";
+	string $paintRed		= "vrPaintRed";
+	string $paintGreen		= "vrPaintGreen";
+	string $paintBlue		= "vrPaintBlue";
+	string $paintNavy		= "vrPaintNavy";
+	string $paintYellow		= "vrPaintYellow";	
+
+	string $paintBin 		= "carPaint";	
+	
+	string $materialList[] = { $paintSilver,
+							$paintWhite,
+							$paintBlack,
+							$paintDarkGrey,
+							$paintChampagne,
+							$paintDarkRed,
+							$paintRed,
+							$paintGreen,
+							$paintBlue,
+							$paintNavy,
+							$paintYellow
+							};
+							
+							
+	// Check if paint shader exists - if not create it - add to paint bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			shadingNode -n $material -asShader VRayCarPaintMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+		}
+		select -r $material;
+		binMembership -add $paintBin;
+	}
+	
+
+	// Setup Colour
+			
+	setAttr ($paintBlack+".color") -type double3 0 0 0 ;
+	setAttr ($paintBlue+".color") -type double3 0 0 1 ;
+	setAttr ($paintChampagne+".color") -type double3 0.76 0.76 0.69 ;
+	setAttr ($paintDarkGrey+".color") -type double3 0.23 0.23 0.23 ;
+	setAttr ($paintDarkRed+".color") -type double3 0.35 0.07 0.08 ;
+	setAttr ($paintGreen+".color") -type double3 0 1 0 ;
+	setAttr ($paintNavy+".color") -type double3 0 0 0.45 ;
+	setAttr ($paintRed+".color") -type double3 0.76 0 0 ;
+	setAttr ($paintSilver+".color") -type double3 0.59 0.59 0.589 ;
+	setAttr ($paintWhite+".color") -type double3 1 1 1 ;
+	setAttr ($paintYellow+".color") -type double3 1 1 0 ;
+
+}

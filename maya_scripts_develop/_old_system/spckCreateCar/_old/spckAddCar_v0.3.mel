@@ -1,0 +1,197 @@
+// The following code will create a dialogue box allowing the user
+// to input the name of the car he is working on.
+
+{
+		// Here, we are declaring/defining our variables.
+		// We're globally initialising (hence the prefix global string) a variable 
+		// (indicated by $).
+		global string $CarAString;
+		global string $WheelRear_R = "WheelRear_R";
+		global string $WheelRear_L = "WheelRear_L";
+		global string $WheelFront_R = "WheelFront_R";
+		global string $WheelFront_L = "WheelFront_L";
+		global string $BrakeRear_L = "BrakeRear_L";
+		global string $BrakeRear_R = "BrakeRear_R";
+		global string $BrakeFront_L = "BrakeFront_L";
+		global string $BrakeFront_R = "BrakeFront_R";
+		global string $Exterior = "Exterior";
+		global string $Under = "Under";
+		global string $Misc = "Misc";
+		global string $Headlight = "Headlight";
+		global string $Taillight = "Taillight";
+		global string $Foglight = "Foglight";
+		global string $Mirror = "Mirror";
+		global string $Wheels = "Wheels";
+		global string $WheelsRear = "WheelsRear";
+		global string $WheelsFront = "WheelsFront";
+		global string $Brakes = "Brakes";
+		global string $Body = "Body";
+		global string $Lights = "Lights";
+		global string $Locators = "Locators";
+		global string $_TailLight_L = "_TailLight_L";
+		global string $_TailLight_R = "_TailLight_R";
+		global string $_HeadLight_L = "_HeadLight_L";
+		global string $_HeadLight_R = "_HeadLight_R";
+		global string $_BrakeLight_L = "_BrakeLight_L";
+		global string $_BrakeLight_R = "_BrakeLight_R";
+		global string $_FogLight_L = "_FogLight_L";
+		global string $_FogLight_R = "_FogLight_R";
+		global string $_FrontContact_L = "_FrontContact_L";
+		global string $_FrontContact_R = "_FrontContact_R";
+		global string $_RearContact_L = "_RearContact_L";
+		global string $_RearContact_R = "_RearContact_R";
+		
+		// Creating a dialogue box to request the car name.
+		string $result = `promptDialog 
+			-title "Car Initialisation"
+			-message "Enter Name of Car:"
+			-button "OK" -button "Cancel"
+			-defaultButton "OK" -cancelButton "Cancel"
+			-dismissString "Cancel"`;
+	 
+	 	// If OK pressed on the dialogue box...
+		if ($result == "OK") {
+		
+			// Query the entry typed by the user and then use it for variable CarAString.
+			$CarAString = `promptDialog -query -text`;
+		}				  
+		else {
+			print("Please re-run the script again.\n");
+		}
+}
+
+// Below creates a new node. -s shares it across multiple files, so only create if
+// it doesn't already exist. -n names it to what is specified (vrayEnvironmentPreviewTm).
+
+// createNode transform -s -n "vrayEnvironmentPreviewTm";
+// createNode VRayEnvironmentPreview -s -n "vrayEnvironmentPreview" -p "vrayEnvironmentPreviewTm";
+
+// Below creates a new empty group.
+
+CreateEmptyGroup;
+
+// Below selects the empty group (null1 by default).
+
+select -r null1 ;
+
+// Below renames the selected "null1" to the variable value found above.
+
+rename "null1" $WheelRear_R;
+CreateEmptyGroup;
+select -r null1 ;
+rename "null1" $WheelRear_L;
+CreateEmptyGroup;
+select -r null1 ;
+rename "null1" $WheelFront_R;
+CreateEmptyGroup;
+select -r null1 ;
+rename "null1" $WheelFront_L;
+CreateEmptyGroup;
+select -r null1 ;
+rename "null1" $BrakeRear_L;
+CreateEmptyGroup;
+select -r null1 ;
+rename "null1" $BrakeRear_R;
+CreateEmptyGroup;
+select -r null1 ;
+rename "null1" $BrakeFront_L;
+CreateEmptyGroup;
+select -r null1 ;
+rename "null1" $BrakeFront_R;
+CreateEmptyGroup;
+select -r null1 ;
+rename "null1" $Exterior;
+CreateEmptyGroup;
+select -r null1 ;
+rename "null1" $Under;
+CreateEmptyGroup;
+select -r null1 ;
+rename "null1" $Misc;
+CreateEmptyGroup;
+select -r null1 ;
+rename "null1" $Headlight;
+CreateEmptyGroup;
+select -r null1 ;
+rename "null1" $Taillight;
+CreateEmptyGroup;
+select -r null1 ;
+rename "null1" $Foglight;
+CreateEmptyGroup;
+select -r null1 ;
+rename "null1" $Mirror;
+
+// The code has been reused and slightly modified to create
+// all our base groups. Now we create our locators in a very similar fashion.
+
+CreateLocator;
+
+// Below selects our previously created locator.
+
+select -r locator1;
+
+// Below renames the locator to what is specified.
+// Because we want the name of our locators to incorporate that of our car's,
+// the brackets act like an equation.
+// if $CarAString = Hyundai and $_TailLight_L = _TailLight_L
+// using substitution "null_" + $CarAString + $_TailLight_L
+// results in "null_Hyundai_TailLight_L".
+
+rename "locator1" ("null_" +$CarAString + $_TailLight_L);
+CreateLocator;
+select -r locator1;
+rename "locator1" ("null_" +$CarAString + $_TailLight_R);
+CreateLocator;
+select -r locator1;
+rename "locator1" ("null_" +$CarAString + $_HeadLight_L);
+CreateLocator;
+select -r locator1;
+rename "locator1" ("null_" +$CarAString + $_HeadLight_R);
+CreateLocator;
+select -r locator1;
+rename "locator1" ("null_" +$CarAString + $_BrakeLight_L);
+CreateLocator;
+select -r locator1;
+rename "locator1" ("null_" +$CarAString + $_BrakeLight_R);
+CreateLocator;
+select -r locator1;
+rename "locator1" ("null_" +$CarAString + $_FogLight_L);
+CreateLocator;
+select -r locator1;
+rename "locator1" ("null_" +$CarAString + $_FogLight_R);
+CreateLocator;
+select -r locator1;
+rename "locator1" ("null_" +$CarAString + $_FrontContact_L);
+CreateLocator;
+select -r locator1;
+rename "locator1" ("null_" +$CarAString + $_FrontContact_R);
+CreateLocator;
+select -r locator1;
+rename "locator1" ("null_" +$CarAString + $_RearContact_L);
+CreateLocator;
+select -r locator1;
+rename "locator1" ("null_" +$CarAString + $_RearContact_R);
+
+// Our locators have now been created.
+// To make our system easier to navigate, we group the groups.
+// This can be compared to a folder system.
+// An example is the following code (immediately below) which creates a group, names (-n) 
+// it using the variable $WheelsRear, and puts inside
+// it our previously created empty groups $WheelRear_R and $WheelRear_L
+
+group -n $WheelsRear $WheelRear_R $WheelRear_L;
+group -n $WheelsFront $WheelFront_R $WheelFront_L;
+group -n $Brakes $BrakeRear_L $BrakeRear_R $BrakeFront_L $BrakeFront_R;
+group -n $Wheels $WheelsRear $WheelsFront Brakes;
+group -n $Lights $Headlight $Taillight $Foglight $Mirror;
+group -n $Body $Lights $Misc $Under $Exterior;
+group -n $Locators ("null_" +$CarAString + "_TailLight_L") 
+("null_" +$CarAString + "_TailLight_R") ("null_" +$CarAString + "_HeadLight_L") 
+("null_" +$CarAString + "_HeadLight_R") ("null_" +$CarAString + "_BrakeLight_L")
+("null_" +$CarAString + "_BrakeLight_R") ("null_" +$CarAString + "_FogLight_L")
+("null_" +$CarAString + "_FogLight_R") ("null_" +$CarAString + "_FrontContact_L")
+("null_" +$CarAString + "_FrontContact_R") ("null_" +$CarAString + "_RearContact_L")
+("null_" +$CarAString + "_RearContact_R");
+group -n $CarAString $Wheels $Body $Locators;
+
+// We have reused this simple piece of code to create an easy to navigate structure.
+// Enjoy! By Michael Grassi.

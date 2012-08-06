@@ -1,0 +1,195 @@
+// spckAlignWheel_v0.1.mel
+//
+// By Daniel Harkness
+
+source "spinBoundingBoxFuncs.mel";
+
+// Fix bad alignment of a wheel
+global int $gHasAlignWheelBeenRun = 0;
+global proc spckAlignWheel() {
+
+	string $select[] = `ls -sl`;
+	
+	if (size($select) != 1) {
+		print "You can align one and only one wheel at a time.\n";
+		return;
+	}
+
+	string $selectItem = $select[1];
+
+	// See if you want the wheels aligned.
+	
+	global int $gHasAlignWheelBeenRun;
+	if ( $gHasAlignWheelBeenRun == 0){
+	
+		string $result = `confirmDialog 
+			-title "spckAlignWheel"
+			-message "This message will be displayed only once per session.\n\nThe circular part of the wheel needs to be in the world YZ plane.\n\nThe wheel depth should be along the world X axis.\n\nIt is recommended that you place brake units within the wheel group whilst aligning."
+			-button "OK" -button "Cancel"
+			-defaultButton "OK" -cancelButton "Cancel"
+			-dismissString "Cancel"`;
+				
+		// If OK pressed on the dialogue box...
+		if ($result == "OK") {
+			$gHasAlignWheelBeenRun = 1;
+		}
+		else{
+			print "Operation cancelled.\n";
+			return;
+		}
+	}
+
+
+
+	viewFit -animate 1; allViewFit(0);
+	
+	$bounds = getAnimatedBoundsForMeshes( $select );
+	$pivotX = ($bounds[0]+$bounds[3])/2;
+	$pivotY = ($bounds[1]+$bounds[4])/2;
+	$pivotZ = ($bounds[2]+$bounds[5])/2;
+	move -a -os $pivotX $pivotY $pivotZ ($selectItem+".scalePivot") ($selectItem+".rotatePivot");
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+
+	float $sizeBounds[] = getAnimatedSizeForMeshes( $select );
+	float $sizeX = $sizeBounds[0];
+	float $sizeY = $sizeBounds[1];
+	float $sizeZ = $sizeBounds[2];
+	float $newSizeX = $sizeX;
+	float $newSizeY = $sizeY;
+	float $newSizeZ = $sizeZ;
+	
+	float $nudge = 0.05;
+	float $threshold = 0.001;
+	float $difference = 1.0;
+
+		
+	for ($i=0 ; $i<3 ; $i++ ) { //filter through the process twice
+		// Align wheel on X-bounds, Y-Axis
+		
+	
+		rotate -r -os 0 $nudge 0;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		$sizeBounds = getAnimatedSizeForMeshes( $select );
+		float $newSizeXpos = $sizeBounds[0];
+	
+		rotate -r -os 0 (-2*$nudge) 0;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		$sizeBounds = getAnimatedSizeForMeshes( $select );
+		float $newSizeXneg = $sizeBounds[0];
+		rotate -r -os 0 $nudge 0;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		
+		print ("Aligning Wheel: "+$selectItem);
+		print ("Original X size is "+ $sizeX + "\n");
+		print ("Pos Rot X size is "+ $newSizeXpos + "\n");
+		print ("Neg Rot X size is "+ $newSizeXneg + "\n\n");
+	
+		if ( $newSizeXpos < $newSizeXneg ) {
+			print "Positive Rotate was smaller\n\n\n";
+		}
+		else if ( $newSizeXpos > $newSizeXneg ){
+			print "Negative Rotate was smaller\n\n\n";
+			$nudge = -$nudge;
+		}
+		else {
+			$newSizeX=$sizeX;
+			$difference = -1;
+		}
+	
+		while ( $difference > 0 ) {
+			
+			$sizeX = $newSizeX;
+	
+			rotate -r -os 0 $nudge 0;
+			makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+			refresh -f;
+			$sizeBounds = getAnimatedSizeForMeshes( $select );
+			$newSizeX = $sizeBounds[0];
+			$difference = $sizeX - $newSizeX;
+			
+			/*
+			print ("sizeX = "+$sizeX+"\n"); 
+			print ("newSizeX = "+$newSizeX+"\n"); 
+			print ($sizeX - $newSizeX);
+			print "\n";
+	
+			print $difference;
+			*/
+		}	
+		
+		// Align wheel on X-bounds, Z-axis
+		$difference = 1;
+		
+		rotate -r -os 0 0 $nudge;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		$sizeBounds = getAnimatedSizeForMeshes( $select );
+		float $newSizeXpos = $sizeBounds[0];
+	
+		rotate -r -os 0 0 (-2*$nudge);
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		$sizeBounds = getAnimatedSizeForMeshes( $select );
+		float $newSizeXneg = $sizeBounds[0];
+		rotate -r -os 0 0 $nudge;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		
+		print ("Original X size is "+ $sizeX + "\n");
+		print ("Pos Rot X size is "+ $newSizeXpos + "\n");
+		print ("Neg Rot X size is "+ $newSizeXneg + "\n\n");
+	
+		if ( $newSizeXpos < $newSizeXneg ) {
+			print "Positive Rotate was smaller\n\n";
+		}
+		else if ( $newSizeXpos > $newSizeXneg ){
+			print "Negative Rotate was smaller\n\n";
+			$nudge = -$nudge;
+		}
+		else {
+			$newSizeX=$sizeX;
+			$difference = -1;
+		}
+	
+		while ( $difference > 0 ) {
+			
+			$sizeX = $newSizeX;
+	
+			rotate -r -os 0 0 $nudge;
+			makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+			refresh -f;
+			$sizeBounds = getAnimatedSizeForMeshes( $select );
+			$newSizeX = $sizeBounds[0];
+			$difference = $sizeX - $newSizeX;
+			
+			/*
+			print ("sizeX = "+$sizeX+"\n"); 
+			print ("newSizeX = "+$newSizeX+"\n"); 
+			print ($sizeX - $newSizeX);
+			print "\n";
+	
+			print $difference;
+			*/
+		}	
+	}
+	
+	/*
+	// Align wheels to sit exactly on the ground
+
+	$sizeBounds = getAnimatedSizeForMeshes( $select );
+	$bounds = getAnimatedBoundsForMeshes( $select );
+	float $moveY = $sizeBounds[1] - $bounds[4];
+	
+	move -a -ws -y $moveY;
+
+	// Do the final pivot set
+	 
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+	*/
+	
+	print "Complete\n";
+}
+

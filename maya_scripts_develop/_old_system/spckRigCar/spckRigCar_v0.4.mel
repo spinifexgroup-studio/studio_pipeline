@@ -1,0 +1,945 @@
+// spckRigCar_v0.4.mel
+//
+// By Daniel Harkness
+
+source "spinBoundingBoxFuncs.mel";
+
+// Rig Car
+// ===================================================================================
+
+global proc spckRigCar() {
+
+	//
+	// Setup names of car parts
+	//
+	
+	string $car		 			= "CarX";
+	string $WheelRear_R 		= "_WheelRear_R";
+	string $WheelRear_L 		= "_WheelRear_L";
+	string $WheelFront_R 		= "_WheelFront_R";
+	string $WheelFront_L 		= "_WheelFront_L";
+	string $BrakeRear_L 		= "_BrakeRear_L";
+	string $BrakeRear_R 		= "_BrakeRear_R";
+	string $BrakeFront_L 		= "_BrakeFront_L";
+	string $BrakeFront_R 		= "_BrakeFront_R";
+	string $Wheels 				= "_Wheels";
+	string $WheelsRear 			= "_WheelsRear";
+	string $WheelsFront 		= "_WheelsFront";
+	string $Body 				= "_Body";
+	string $FrontContact_L 		= "_FrontContact_L";
+	string $FrontContact_R 		= "_FrontContact_R";
+	string $RearContact_L 		= "_RearContact_L";
+	string $RearContact_R 		= "_RearContact_R";
+	string $expressionText;
+	
+	int $tempRand				= `rand 100000`;
+	string $tempName			= "_temp_"+$tempRand;
+
+	// Creating a dialogue box to request the car name.
+	string $result = `promptDialog 
+		-title "spckRigCar"
+		-message "Enter Letter of car to rig:"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+	
+		// Query the entry typed by the user and then use it for variable CarAString.
+		$car = `promptDialog -query -text`;
+		
+		if (size ($car) == 1) {
+			if (isValidString ($car, "([a-zA-Z]+)([a-zA-Z])*")){
+				$car = toupper ($car);
+				$car = "Car"+$car;
+				if ( !`objExists $car`){
+					print("That car doesn't exist.\n");
+					return;
+				}
+				if ( `objExists ($car+"_Rig")`){
+					print("It looks as although you may have already rigged the car\n");
+					return;
+				}
+			}
+			else{
+				print("Invalid Character. Please re-run the script again.\n"); return;
+			}
+		}
+		else{
+			print("Invalid Character. Please re-run the script again.\n"); return;
+		}
+	}				  
+	else {
+		print("Please re-run the script again.\n"); return;
+	}
+
+
+	//
+	// Start rigging Car
+	//
+	
+	
+	select -cl;
+
+	spckRigCar_CentreWheelPivots ($car);
+	spckRigCar_CentreWheelsToAxes ($car);
+	spckRigCar_CreateWheelDummies ($car);
+	spckRigCar_CreateSteering ($car);
+	spckRigCar_AttachWheelsToDummies ($car);
+	spckRigCar_CreateAndAttachBodyDummies ($car);
+	spckRigCar_CreateRigHierarchy ($car);
+	
+	select -cl;	
+	
+	// Give some feedback for next steps
+	
+	string $message = "\nEat some poo.";
+	
+	string $result = `confirmDialog 
+		-title "spckRenameCar Success!"
+		-message $message
+		-button "OK"
+		-defaultButton "OK"`;
+	print "Complete.\n";
+}
+
+
+// Fix bad alignment of a wheel
+// ===================================================================================
+
+global proc spckRigCar_AlignWheel( string $selectItem )
+{
+	print "Aligning Wheels!\n\n";
+
+	$selectedGroup = `select -r $selectItem`;
+	$select = `ls -sl`;
+
+	viewFit -animate 1; allViewFit(0);
+	
+	$bounds = getAnimatedBoundsForMeshes( $select );
+	$pivotX = ($bounds[0]+$bounds[3])/2;
+	$pivotY = ($bounds[1]+$bounds[4])/2;
+	$pivotZ = ($bounds[2]+$bounds[5])/2;
+	move -a -os $pivotX $pivotY $pivotZ ($selectItem+".scalePivot") ($selectItem+".rotatePivot");
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+
+	float $sizeBounds[] = getAnimatedSizeForMeshes( $select );
+	float $sizeX = $sizeBounds[0];
+	float $sizeY = $sizeBounds[1];
+	float $sizeZ = $sizeBounds[2];
+	float $newSizeX = $sizeX;
+	float $newSizeY = $sizeY;
+	float $newSizeZ = $sizeZ;
+	
+	float $nudge = 0.1;
+	float $threshold = 0.001;
+	float $difference = 1.0;
+
+		
+	for ($i=0 ; $i<3 ; $i++ ) { //filter through the process twice
+		// Align wheel on X-bounds, Y-Axis
+		
+	
+		rotate -r -os 0 $nudge 0;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		$sizeBounds = getAnimatedSizeForMeshes( $select );
+		float $newSizeXpos = $sizeBounds[0];
+	
+		rotate -r -os 0 (-2*$nudge) 0;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		$sizeBounds = getAnimatedSizeForMeshes( $select );
+		float $newSizeXneg = $sizeBounds[0];
+		rotate -r -os 0 $nudge 0;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		
+		print ("Aligning Wheel: "+$selectItem);
+		print ("Original X size is "+ $sizeX + "\n");
+		print ("Pos Rot X size is "+ $newSizeXpos + "\n");
+		print ("Neg Rot X size is "+ $newSizeXneg + "\n\n");
+	
+		if ( $newSizeXpos < $newSizeXneg ) {
+			print "Positive Rotate was smaller\n\n\n";
+		}
+		else if ( $newSizeXpos > $newSizeXneg ){
+			print "Negative Rotate was smaller\n\n\n";
+			$nudge = -$nudge;
+		}
+		else {
+			$newSizeX=$sizeX;
+			$difference = -1;
+		}
+	
+		while ( $difference > 0 ) {
+			
+			$sizeX = $newSizeX;
+	
+			rotate -r -os 0 $nudge 0;
+			makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+			refresh -f;
+			$sizeBounds = getAnimatedSizeForMeshes( $select );
+			$newSizeX = $sizeBounds[0];
+			$difference = $sizeX - $newSizeX;
+			
+			/*
+			print ("sizeX = "+$sizeX+"\n"); 
+			print ("newSizeX = "+$newSizeX+"\n"); 
+			print ($sizeX - $newSizeX);
+			print "\n";
+	
+			print $difference;
+			*/
+		}	
+		
+		// Align wheel on X-bounds, Z-axis
+		$difference = 1;
+		
+		rotate -r -os 0 0 $nudge;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		$sizeBounds = getAnimatedSizeForMeshes( $select );
+		float $newSizeXpos = $sizeBounds[0];
+	
+		rotate -r -os 0 0 (-2*$nudge);
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		$sizeBounds = getAnimatedSizeForMeshes( $select );
+		float $newSizeXneg = $sizeBounds[0];
+		rotate -r -os 0 0 $nudge;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+		refresh -f;
+		
+		print ("Original X size is "+ $sizeX + "\n");
+		print ("Pos Rot X size is "+ $newSizeXpos + "\n");
+		print ("Neg Rot X size is "+ $newSizeXneg + "\n\n");
+	
+		if ( $newSizeXpos < $newSizeXneg ) {
+			print "Positive Rotate was smaller\n\n";
+		}
+		else if ( $newSizeXpos > $newSizeXneg ){
+			print "Negative Rotate was smaller\n\n";
+			$nudge = -$nudge;
+		}
+		else {
+			$newSizeX=$sizeX;
+			$difference = -1;
+		}
+	
+		while ( $difference > 0 ) {
+			
+			$sizeX = $newSizeX;
+	
+			rotate -r -os 0 0 $nudge;
+			makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+			refresh -f;
+			$sizeBounds = getAnimatedSizeForMeshes( $select );
+			$newSizeX = $sizeBounds[0];
+			$difference = $sizeX - $newSizeX;
+			
+			/*
+			print ("sizeX = "+$sizeX+"\n"); 
+			print ("newSizeX = "+$newSizeX+"\n"); 
+			print ($sizeX - $newSizeX);
+			print "\n";
+	
+			print $difference;
+			*/
+		}	
+	}
+	
+	// Align wheels to sit exactly on the ground
+
+	$sizeBounds = getAnimatedSizeForMeshes( $select );
+	$bounds = getAnimatedBoundsForMeshes( $select );
+	float $moveY = $sizeBounds[1] - $bounds[4];
+	
+	move -a -ws -y $moveY;
+
+	// Do the final pivot set
+	 
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
+}
+
+
+// Set pivots on wheels
+// ===================================================================================
+
+global proc spckRigCar_CentreWheelPivots ( string $car )
+{
+	//
+	// Setup names of car parts
+	//
+	
+	string $Wheels				= "_Wheels";
+	string $WheelRear_R 		= "_WheelRear_R";
+	string $WheelRear_L 		= "_WheelRear_L";
+	string $WheelFront_R 		= "_WheelFront_R";
+	string $WheelFront_L 		= "_WheelFront_L";
+	string $BrakeRear_L 		= "_BrakeRear_L";
+	string $BrakeRear_R 		= "_BrakeRear_R";
+	string $BrakeFront_L 		= "_BrakeFront_L";
+	string $BrakeFront_R 		= "_BrakeFront_R";
+
+	//if this is not 0 then later on the wheels will be shuffled into alignemnt
+	int $shouldAlignWeels = 0;
+	
+	// See if you want the wheels aligned.
+	string $result = `confirmDialog 
+		-title "spckRigCar"
+		-message "Do you wish to have your wheels aligned?"
+		-button "YES" -button "NO"
+		-defaultButton "YES" -cancelButton "NO"
+		-dismissString "NO"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "YES") {
+		$shouldAlignWeels	= 1;
+	}
+	
+
+	float $bounds[];
+	float $sizeBounds[];
+	string $selectItem;
+	string $selectBrakes;
+	string $selectedGroup;
+	string $select[];
+	float $pivotX;
+	float $pivotY;
+	float $pivotZ;
+	
+	
+	string $wheelList[] = { ($car + $WheelRear_L),
+							($car + $WheelRear_R),
+							($car + $WheelFront_L),
+							($car + $WheelFront_R)
+							};
+							
+	string $brakeList[] = { ($car + $BrakeRear_L),
+							($car + $BrakeRear_R),
+							($car + $BrakeFront_L),
+							($car + $BrakeFront_R)
+							};
+	
+	//
+	// Iterate through each wheel - clean up and set axis- only if we were asked
+	//
+	
+	for ( $i=0 ; $i < 4 ;$i++ ) {
+	
+		string $wheel = $wheelList[$i];
+		string $brake = $brakeList[$i];
+		
+		$selectedGroup = `select -r $wheel`;
+		$select = `ls -sl`;
+		
+		if ( $shouldAlignWeels != 0 ) {
+			$bounds = getAnimatedBoundsForMeshes( $select );
+			
+			//Centre pivots on wheel and match brake prior to aligning
+			
+			$pivotX = ($bounds[0]+$bounds[3])/2;
+			$pivotY = ($bounds[1]+$bounds[4])/2;
+			$pivotZ = ($bounds[2]+$bounds[5])/2;
+			
+			move -a -os $pivotX $pivotY $pivotZ ($wheel+".scalePivot") ($wheel+".rotatePivot");
+			move -a -ws $pivotX $pivotY $pivotZ ($brake+".scalePivot") ($brake+".rotatePivot");
+			
+			// Constrain brake to wheel first before adjusting then unconstrain
+		
+			parent $brake $wheel;
+			spckRigCar_AlignWheel ($wheel);
+			parent $brake ($car+$Wheels);
+		}
+		
+		
+		
+		//Move pivots to wheel interior
+		$bounds = getAnimatedBoundsForMeshes( $select );
+
+		if ( $i == 0 || $i == 2){		//Left Items
+			$pivotX = $bounds[0];
+		}
+		else {							//Right Items
+			$pivotX = $bounds[3];
+		}		
+		$pivotY = ($bounds[1]+$bounds[4])/2;
+		$pivotZ = ($bounds[2]+$bounds[5])/2;
+		move -a -os $pivotX $pivotY $pivotZ ($wheel+".scalePivot") ($wheel+".rotatePivot");
+		move -a -os $pivotX $pivotY $pivotZ ($brake+".scalePivot") ($brake+".rotatePivot");
+	}
+}
+
+
+// Set centres of wheels to correct axes for front and back
+// ===================================================================================
+
+global proc spckRigCar_CentreWheelsToAxes ( string $car )
+{
+	//
+	// Setup names of car parts
+	//
+
+	string $WheelRear_R 		= "_WheelRear_R";
+	string $WheelRear_L 		= "_WheelRear_L";
+	string $WheelFront_R 		= "_WheelFront_R";
+	string $WheelFront_L 		= "_WheelFront_L";
+	string $BrakeRear_L 		= "_BrakeRear_L";
+	string $BrakeRear_R 		= "_BrakeRear_R";
+	string $BrakeFront_L 		= "_BrakeFront_L";
+	string $BrakeFront_R 		= "_BrakeFront_R";
+
+	
+
+	float $bounds[];
+	float $sizeBounds[];
+	string $selectItem;
+	string $selectBrakes;
+	string $selectedGroup;
+	string $select[];
+	float $pivotX;
+	float $pivotY;
+	float $pivotZ;
+	
+	
+	float $boundsL[];
+	float $boubdsR[];
+	float $moveZL;
+	float $moveZR;
+	
+	//
+	// Align rear wheels
+	//
+	
+	$selectedGroup = `select -r ($car + $WheelRear_L)`;
+	$select = `ls -sl`;
+	$boundsL = getAnimatedBoundsForMeshes( $select );
+
+	$selectedGroup = `select -r ($car + $WheelRear_R)`;
+	$select = `ls -sl`;
+	$boundsR = getAnimatedBoundsForMeshes( $select );
+	
+	$moveZL = ( (($boundsR[2]+$boundsR[5])/2) - (($boundsL[2]+$boundsL[5])/2) )/2;
+	$moveZR = ( (($boundsL[2]+$boundsL[5])/2) - (($boundsR[2]+$boundsR[5])/2) )/2;
+
+	move -r -os -wd 0 0 $moveZL ($car + $WheelRear_L);
+	move -r -os -wd  0 0 $moveZL ($car + $BrakeRear_L);
+
+	move -r -os -wd  0 0 $moveZR ($car + $WheelRear_R);
+	move -r -os -wd  0 0 $moveZR ($car + $BrakeRear_R);
+	
+	
+	$selectedGroup = `select -r ($car + $WheelRear_L)`;
+	$select = `ls -sl`;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the wheels
+
+	$selectedGroup = `select -r ($car + $WheelRear_R)`;
+	$select = `ls -sl`;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the wheels
+
+	$selectedGroup = `select -r ($car + $BrakeRear_L)`;
+	$select = `ls -sl`;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the brake
+
+	$selectedGroup = `select -r ($car + $BrakeRear_L)`;
+	$select = `ls -sl`;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the brake
+	
+	//
+	// Align front wheels
+	//
+	
+	$selectedGroup = `select -r ($car + $WheelFront_L)`;
+	$select = `ls -sl`;
+	$boundsL = getAnimatedBoundsForMeshes( $select );
+
+	$selectedGroup = `select -r ($car + $WheelFront_R)`;
+	$select = `ls -sl`;
+	$boundsR = getAnimatedBoundsForMeshes( $select );
+	
+	$moveZL = ( (($boundsR[2]+$boundsR[5])/2) - (($boundsL[2]+$boundsL[5])/2) )/2;
+	$moveZR = ( (($boundsL[2]+$boundsL[5])/2) - (($boundsR[2]+$boundsR[5])/2) )/2;
+
+	move -r -os -wd 0 0 $moveZL ($car + $WheelFront_L);
+	move -r -os -wd  0 0 $moveZL ($car + $BrakeFront_L);
+
+	move -r -os -wd  0 0 $moveZR ($car + $WheelFront_R);
+	move -r -os -wd  0 0 $moveZR ($car + $BrakeFront_R);
+	
+	
+	$selectedGroup = `select -r ($car + $WheelFront_L)`;
+	$select = `ls -sl`;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the wheels
+
+	$selectedGroup = `select -r ($car + $WheelFront_R)`;
+	$select = `ls -sl`;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the wheels
+
+	$selectedGroup = `select -r ($car + $BrakeFront_L)`;
+	$select = `ls -sl`;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the brake
+
+	$selectedGroup = `select -r ($car + $BrakeFront_L)`;
+	$select = `ls -sl`;
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the brake
+
+
+}
+
+
+// Set up nurbs dummies and overrides to attach wheels to
+// ===================================================================================
+
+global proc spckRigCar_CreateWheelDummies ( string $car )
+{
+	//
+	// Setup names of car parts
+	//
+	
+	string $Wheels				= "_Wheels";
+	string $WheelRear_R 		= "_WheelRear_R";
+	string $WheelRear_L 		= "_WheelRear_L";
+	string $WheelFront_R 		= "_WheelFront_R";
+	string $WheelFront_L 		= "_WheelFront_L";
+	string $BrakeRear_L 		= "_BrakeRear_L";
+	string $BrakeRear_R 		= "_BrakeRear_R";
+	string $BrakeFront_L 		= "_BrakeFront_L";
+	string $BrakeFront_R 		= "_BrakeFront_R";
+	
+	string $wheelDummyFL 		= $car+"_wheelDummyFL";
+	string $wheelDummyFR 		= $car+"_wheelDummyFR";
+	string $wheelDummyRL 		= $car+"_wheelDummyRL";
+	string $wheelDummyRR 		= $car+"_wheelDummyRR";
+
+	string $wheelRotOverrideFL 	= $car+"_wheelRotOverride_FL";
+	string $wheelRotOverrideFR	= $car+"_wheelRotOverride_FR";
+	string $wheelRotOverrideRL 	= $car+"_wheelRotOverride_RL";
+	string $wheelRotOverrideRR 	= $car+"_wheelRotOverride_RR";
+
+	string $rotationDummy 		= $car+"_rotationDummy";
+
+
+	string $wheelList[] = { ($car + $WheelRear_L),
+							($car + $WheelRear_R),
+							($car + $WheelFront_L),
+							($car + $WheelFront_R)
+							};
+							
+	string $brakeList[] = { ($car + $BrakeRear_L),
+							($car + $BrakeRear_R),
+							($car + $BrakeFront_L),
+							($car + $BrakeFront_R)
+							};
+	
+	float $wheelRadius[];
+	for ( $i=0 ; $i<4 ; $i++ ){
+		$selectedGroup = `select -r ($wheelList[$i])`;
+		$select = `ls -sl`;
+
+		$sizeBounds = getAnimatedSizeForMeshes( $select );
+		
+		float $radiusY = $sizeBounds[1]/2;
+		float $radiusZ = $sizeBounds[2]/2;
+		$wheelRadius[$i] = ($radiusY+$radiusZ)/2;
+		print ($wheelList[$i]+" radius is "+$wheelRadius[$i]+"\n");
+	};
+	
+	float $cylinderRadius = ($wheelRadius[0]+$wheelRadius[1]+$wheelRadius[2]+$wheelRadius[3])/4;
+
+	
+	createNode "transform" -n $rotationDummy -p $car ;
+	createNode "implicitSphere" -n ($rotationDummy+"_Sphere") -p $rotationDummy;
+	setAttr ($rotationDummy+".radius") $cylinderRadius;
+	
+	setAttr ($rotationDummy+".overrideEnabled") 1;
+	setAttr ($rotationDummy+".overrideColor") 17;
+
+	float $wheelPosition[3] = `xform -query -rotatePivot ($car + $WheelRear_L)`;
+	move -a -os 0 ($wheelPosition[1]*5) $wheelPosition[2] $rotationDummy;
+	
+	setAttr -lock true -keyable false -channelBox false ($rotationDummy+".tx");
+	setAttr -lock true -keyable false -channelBox false ($rotationDummy+".ty");
+	setAttr -lock true -keyable false -channelBox false ($rotationDummy+".tz");
+	setAttr -lock true -keyable false -channelBox false ($rotationDummy+".ry");
+	setAttr -lock true -keyable false -channelBox false ($rotationDummy+".rz");
+
+	
+	// Create four wheel dummys
+	
+	
+	string $dummyList[] = { ($wheelDummyFL),
+							($wheelDummyFR),
+							($wheelDummyRL),
+							($wheelDummyRR)
+							};
+							
+	string $overrideList[] = { ($wheelRotOverrideFL),
+							($wheelRotOverrideFR),
+							($wheelRotOverrideRL),
+							($wheelRotOverrideRR)
+							};
+
+	for ( $i=0 ; $i<4 ; $i++ ){		// Make a nurbs arc for each wheel
+
+		createNode -name ($dummyList[$i]+"_arc") makeThreePointCircularArc;
+		setAttr ($dummyList[$i]+"_arc.pt1") 0 0 (-$cylinderRadius);
+		setAttr ($dummyList[$i]+"_arc.pt2") 0 0 $cylinderRadius ;
+		setAttr ($dummyList[$i]+"_arc.pt3") 0 $cylinderRadius 0 ;
+		setAttr ($dummyList[$i]+"_arc.d") 3;
+		setAttr ($dummyList[$i]+"_arc.s") 8;
+		createNode "transform" -n ($dummyList[$i]);
+		createNode "nurbsCurve" -name ($dummyList[$i]+"_curve") -parent ($dummyList[$i]);
+		connectAttr ($dummyList[$i]+"_arc.oc") ($dummyList[$i]+"_curve.cr");
+		
+		setAttr ($dummyList[$i]+".overrideEnabled") 1;
+		setAttr ($dummyList[$i]+".overrideColor") 3;
+		
+		// Make a overide arc for each wheel
+
+		createNode -name ($overrideList[$i]+"_arc") makeThreePointCircularArc;
+		setAttr ($overrideList[$i]+"_arc.pt1") 0 0 (-($cylinderRadius-5));
+		setAttr ($overrideList[$i]+"_arc.pt2") 0 0 ($cylinderRadius-5) ;
+		setAttr ($overrideList[$i]+"_arc.pt3") 0 ($cylinderRadius-5) 0 ;
+		setAttr ($overrideList[$i]+"_arc.d") 3;
+		setAttr ($overrideList[$i]+"_arc.s") 8;
+		createNode "transform" -n ($overrideList[$i]);
+		createNode "nurbsCurve" -name ($overrideList[$i]+"_curve") -parent ($overrideList[$i]);
+		connectAttr ($overrideList[$i]+"_arc.oc") ($overrideList[$i]+"_curve.cr");
+		
+		setAttr ($overrideList[$i]+".overrideEnabled") 1;
+		setAttr ($overrideList[$i]+".overrideColor") 17;
+		
+	}
+	
+	$selectedGroup = `select -r ($car + $WheelFront_L)`;
+	$select = `ls -sl`;
+	$sizeBounds = getAnimatedSizeForMeshes( $select );
+
+	$wheelPosition = `xform -query -rotatePivot ($car + $WheelFront_L)`;
+	move -a -os ($wheelPosition[0]+$sizeBounds[0]) $wheelPosition[1] $wheelPosition[2] $wheelDummyFL;
+	move -a -os ($wheelPosition[0]+$sizeBounds[0]) $wheelPosition[1] $wheelPosition[2] $wheelRotOverrideFL;
+
+	$wheelPosition = `xform -query -rotatePivot ($car + $WheelFront_R)`;
+	move -a -os ($wheelPosition[0]-$sizeBounds[0]) $wheelPosition[1] $wheelPosition[2] $wheelDummyFR;
+	move -a -os ($wheelPosition[0]-$sizeBounds[0]) $wheelPosition[1] $wheelPosition[2] $wheelRotOverrideFR;
+
+	$wheelPosition = `xform -query -rotatePivot ($car + $WheelRear_L)`;
+	move -a -os ($wheelPosition[0]+$sizeBounds[0]) $wheelPosition[1] $wheelPosition[2] $wheelDummyRL;
+	move -a -os ($wheelPosition[0]+$sizeBounds[0]) $wheelPosition[1] $wheelPosition[2] $wheelRotOverrideRL;
+
+	$wheelPosition = `xform -query -rotatePivot ($car + $WheelRear_R)`;
+	move -a -os ($wheelPosition[0]-$sizeBounds[0]) $wheelPosition[1] $wheelPosition[2] $wheelDummyRR;
+	move -a -os ($wheelPosition[0]-$sizeBounds[0]) $wheelPosition[1] $wheelPosition[2] $wheelRotOverrideRR;
+
+	for ( $i=0 ; $i<4 ; $i++ ){		// Lock rotate and translate of wheels
+		// Lock rotate and translate
+		setAttr -lock true -keyable false -channelBox false ($dummyList[$i]+".tx");
+		setAttr -lock true -keyable false -channelBox false ($dummyList[$i]+".ty");
+		setAttr -lock true -keyable false -channelBox false ($dummyList[$i]+".tz");
+		setAttr -lock true -keyable false -channelBox false ($dummyList[$i]+".ry");
+		setAttr -lock true -keyable false -channelBox false ($dummyList[$i]+".rz");
+
+		// Lock rotate and translate overrides
+		setAttr -lock true -keyable false -channelBox false ($overrideList[$i]+".tx");
+		setAttr -lock true -keyable false -channelBox false ($overrideList[$i]+".ty");
+		setAttr -lock true -keyable false -channelBox false ($overrideList[$i]+".tz");
+		setAttr -lock true -keyable false -channelBox false ($overrideList[$i]+".ry");
+		setAttr -lock true -keyable false -channelBox false ($overrideList[$i]+".rz");
+	}
+}
+
+
+// Set up nurbs dummies and overrides to create steering
+// ===================================================================================
+
+global proc spckRigCar_CreateSteering (string $car )
+{
+	string $steeringDummy 		= $car+"_steeringDummy";
+	string $steeringOverride 	= $car+"_steeringOverride";
+	string $WheelFront_R 		= "_WheelFront_R";
+	string $WheelFront_L 		= "_WheelFront_L";
+
+
+	// Make steering
+	curve -n $steeringDummy -d 3 -p -120 0 -60 -p -120 0 -60 -p 0 0 60 -p 0 0 60 -p 0 0 60 -p 120 0 -60 -p 120 0 -60 -k 0 -k 0 -k 0 -k 1 -k 1 -k 1 -k 2 -k 2 -k 2 ;
+	parent $steeringDummy $car;
+	
+	setAttr ($steeringDummy+".overrideEnabled") 1;
+	setAttr ($steeringDummy+".overrideColor") 3;
+
+	
+	curve -n $steeringOverride -d 3 -p -120 0 -60 -p -120 0 -60 -p 0 0 60 -p 0 0 60 -p 0 0 60 -p 120 0 -60 -p 120 0 -60 -k 0 -k 0 -k 0 -k 1 -k 1 -k 1 -k 2 -k 2 -k 2 ;
+	parent $steeringOverride $car;
+	
+	setAttr ($steeringOverride+".overrideEnabled") 1;
+	setAttr ($steeringOverride+".overrideColor") 17;
+
+	float $steeringPosition[3] = `xform -query -rotatePivot ($car + $WheelFront_L)`;
+	move -a -os 0 ($steeringPosition[1]*4) $steeringPosition[2] $steeringOverride;
+	move -a -os 0 0 $steeringPosition[2] $steeringDummy;
+	transformLimits -ry -30 30 -ery 1 1 $steeringDummy;
+	transformLimits -ry -30 30 -ery 1 1 $steeringOverride;
+	
+	setAttr -lock true -keyable false -channelBox false ($steeringDummy+".tx");
+	setAttr -lock true -keyable false -channelBox false ($steeringDummy+".ty");
+	setAttr -lock true -keyable false -channelBox false ($steeringDummy+".tz");
+	setAttr -lock true -keyable false -channelBox false ($steeringDummy+".rx");
+	setAttr -lock true -keyable false -channelBox false ($steeringDummy+".rz");
+
+	setAttr -lock true -keyable false -channelBox false ($steeringOverride+".tx");
+	setAttr -lock true -keyable false -channelBox false ($steeringOverride+".ty");
+	setAttr -lock true -keyable false -channelBox false ($steeringOverride+".tz");
+	setAttr -lock true -keyable false -channelBox false ($steeringOverride+".rx");
+	setAttr -lock true -keyable false -channelBox false ($steeringOverride+".rz");
+	
+	spaceLocator -n ($car+"_steeringAim") -p 0 0 0;
+	setAttr ($car+"_steeringAimShape.localScaleX") 10;
+	setAttr ($car+"_steeringAimShape.localScaleY") 10;
+	setAttr ($car+"_steeringAimShape.localScaleZ") 10;
+	
+	setAttr ($car+"_steeringAim.overrideEnabled") 1;
+	setAttr ($car+"_steeringAim.overrideColor") 17;
+
+	move -a -os 0 0 300 ($car+"_steeringAim");
+
+	select -r ($car+"_steeringAim") ;
+	select -add ($car+"_steeringDummy") ;
+
+	doCreateAimConstraintArgList 1 { "0","0","0","0","0","0","1","0","1","0","0","1","0","1","none","","1","0","1","","1" };
+	aimConstraint -offset 0 0 0 -weight 1 -aimVector 0 0 1 -upVector 0 1 0 -worldUpType "none" -skip x -skip z;
+}
+
+
+// Constrain wheels to the rotation dummies and steering dummies
+// ===================================================================================
+
+global proc spckRigCar_AttachWheelsToDummies (string $car )
+{
+	//
+	// Setup names of car parts
+	//
+	
+	string $Wheels				= "_Wheels";
+	string $WheelRear_R 		= "_WheelRear_R";
+	string $WheelRear_L 		= "_WheelRear_L";
+	string $WheelFront_R 		= "_WheelFront_R";
+	string $WheelFront_L 		= "_WheelFront_L";
+	string $BrakeRear_L 		= "_BrakeRear_L";
+	string $BrakeRear_R 		= "_BrakeRear_R";
+	string $BrakeFront_L 		= "_BrakeFront_L";
+	string $BrakeFront_R 		= "_BrakeFront_R";
+	
+	string $wheelDummyFL 		= $car+"_wheelDummyFL";
+	string $wheelDummyFR 		= $car+"_wheelDummyFR";
+	string $wheelDummyRL 		= $car+"_wheelDummyRL";
+	string $wheelDummyRR 		= $car+"_wheelDummyRR";
+
+	string $wheelRotOverrideFL 	= $car+"_wheelRotOverride_FL";
+	string $wheelRotOverrideFR	= $car+"_wheelRotOverride_FR";
+	string $wheelRotOverrideRL 	= $car+"_wheelRotOverride_RL";
+	string $wheelRotOverrideRR 	= $car+"_wheelRotOverride_RR";
+	
+	string $steeringDummy = $car+"_steeringDummy";
+	string $steeringOverride = $car+"_steeringOverride";
+
+
+	// ====================== Setup Wheel Constraints ======================
+	
+	// Constrain dummies to main dummy rotation
+	
+	group -name ($car+"_steerFL") -parent $car $wheelDummyFL;
+	group -name ($car+"_steerFR") -parent $car $wheelDummyFR;
+	
+	// Make Expressions for wheel rotations
+	
+	// Front Left
+	$expressionText = "CarX_wheelDummyFL.rotateX = (CarX_rotationDummy.rotateX) + (CarX_wheelRotOverride_FL.rotateX)";
+	$expressionText = substituteAllString($expressionText, "CarX", $car);
+	expression -n ($car+"_expression_wheelRotOverride_FL") -s $expressionText -o ($car+"_wheelDummyFL") -ae 1 -uc all ;
+
+	// Front Right
+	$expressionText = "CarX_wheelDummyFR.rotateX = (CarX_rotationDummy.rotateX) + (CarX_wheelRotOverride_FR.rotateX)";
+	$expressionText = substituteAllString($expressionText, "CarX", $car);
+	expression -n ($car+"_expression_wheelRotOverride_FR") -s $expressionText -o ($car+"_wheelDummyFR") -ae 1 -uc all ;
+
+	// Rear Left
+	$expressionText = "CarX_wheelDummyRL.rotateX = (CarX_rotationDummy.rotateX) + (CarX_wheelRotOverride_RL.rotateX)";
+	$expressionText = substituteAllString($expressionText, "CarX", $car);
+	expression -n ($car+"_expression_wheelRotOverride_RL") -s $expressionText -o ($car+"_wheelDummyRL") -ae 1 -uc all ;
+
+	// Rear Right
+	$expressionText = "CarX_wheelDummyRR.rotateX = (CarX_rotationDummy.rotateX) + (CarX_wheelRotOverride_RR.rotateX)";
+	$expressionText = substituteAllString($expressionText, "CarX", $car);
+	expression -n ($car+"_expression_wheelRotOverride_RR") -s $expressionText -o ($car+"_wheelDummyRR") -ae 1 -uc all ;
+
+	
+	//connectAttr -f ($rotationDummy+".rotateX") ($wheelDummyFL+".rotateX");
+	//connectAttr -f ($rotationDummy+".rotateX") ($wheelDummyFR+".rotateX");
+	//connectAttr -f ($rotationDummy+".rotateX") ($wheelDummyRL+".rotateX");
+	//connectAttr -f ($rotationDummy+".rotateX") ($wheelDummyRR+".rotateX");
+
+	// Make Expressions for steering
+	
+	// Front Left
+	$expressionText = "CarX_steerFL.rotateY = (CarX_steeringDummy.rotateY) + (CarX_steeringOverride.rotateY)";
+	$expressionText = substituteAllString($expressionText, "CarX", $car);
+	expression -n ($car+"_expression_wheelSteering_FL") -s $expressionText -o ($car+"_steerFL") -ae 1 -uc all ;
+
+	// Front Left
+	$expressionText = "CarX_steerFR.rotateY = (CarX_steeringDummy.rotateY) + (CarX_steeringOverride.rotateY)";
+	$expressionText = substituteAllString($expressionText, "CarX", $car);
+	expression -n ($car+"_expression_wheelSteering_FR") -s $expressionText -o ($car+"_steerFR") -ae 1 -uc all ;
+
+	//connectAttr -f ($steeringDummy+".rotateY") ($car+"_steerFL"+".rotateY");
+	//connectAttr -f ($steeringDummy+".rotateY") ($car+"_steerFR"+".rotateY");
+	
+	// Constrain real wheels to dummy wheels
+	
+	connectAttr -f ($wheelDummyRL+".rotateX") ($car+$WheelRear_L+".rotateX");
+	connectAttr -f ($wheelDummyRR+".rotateX") ($car+$WheelRear_R+".rotateX");
+
+	connectAttr -f ($steeringDummy+".rotateY") ($car+$BrakeFront_L+".rotateY");
+	connectAttr -f ($steeringDummy+".rotateY") ($car+$BrakeFront_R+".rotateY");
+	
+	select -r $wheelDummyFL;
+	select -add ($car + $WheelFront_L) ;
+	doCreateOrientConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	orientConstraint -offset 0 0 0 -weight 1;
+	
+	select -r $wheelDummyFR ;
+	select -add ($car + $WheelFront_R) ;
+	doCreateOrientConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+	orientConstraint -offset 0 0 0 -weight 1;
+	
+	group -name ($car+"_controlWheels") ($car+"_steerFL") ($car+"_steerFR") $wheelDummyRL $wheelDummyRR;
+}
+
+
+// Setup dummies for body and attach body
+// ===================================================================================
+
+global proc spckRigCar_CreateAndAttachBodyDummies (string $car )
+{
+	//
+	// Setup names of car parts
+	//
+	
+	string $Wheels				= "_Wheels";
+	string $Body				= "_Body";
+	string $bodyRotDummy	 	= $car+"_bodyRotDummy";
+	string $bodyOverride 		= $car+"_bodyOverride";
+
+	// ====================== Body Rotation =====================================
+	
+	$selectItem = $car + $Wheels;
+	string $selectedWheelGroup = `select -r $selectItem`;
+	$select = `ls -sl`;
+
+	float $wheelBounds[] = getAnimatedBoundsForMeshes( $select ); //use the top of wheels as pivot for car
+
+	$selectItem = $car + $Body;
+	$selectedGroup = `select -r $selectItem`;
+	$select = `ls -sl`;
+
+	$bounds = getAnimatedBoundsForMeshes( $select );
+	$pivotX = ($bounds[0]+$bounds[3])/2;
+	$pivotY = $wheelBounds[4];
+	$pivotZ = ($bounds[2]+$bounds[5])/2;
+	move -a -os $pivotX $pivotY $pivotZ ($car + $Body+".scalePivot") ($car + $Body+".rotatePivot") ;
+	move -a -os $pivotX $pivotY $pivotZ ($car + $Wheels+".scalePivot") ($car + $Wheels+".rotatePivot") ;
+	move -a -os $pivotX 0 $pivotZ ($car+".scalePivot") ($car+".rotatePivot") ;
+	
+	curve -n $bodyRotDummy -d 3 -p 0 0 -150 -p 0 0 -150 -p 0 60 -150 -p 0 60 -150 -p 0 60 -150 -p 0 0 150 -p 0 0 150 -k 0 -k 0 -k 0 -k 1 -k 1 -k 1 -k 2 -k 2 -k 2 ;
+	parent $bodyRotDummy $car;
+	float $bodyPosition[3] = `xform -query -rotatePivot ($car + $Body)`;
+	move -a -os 0 ($bodyPosition[1]*2) $bodyPosition[2] $bodyRotDummy;
+	
+	setAttr ($bodyRotDummy+".overrideEnabled") 1;
+	setAttr ($bodyRotDummy+".overrideColor") 17;
+
+	
+	transformLimits -rx -3 3 -erx 1 1 $bodyRotDummy;
+	transformLimits -rz -3 3 -erz 1 1 $bodyRotDummy;
+	setAttr -lock true -keyable false -channelBox false ($bodyRotDummy+".tx");
+	setAttr -lock true -keyable false -channelBox false ($bodyRotDummy+".ty");
+	setAttr -lock true -keyable false -channelBox false ($bodyRotDummy+".tz");
+	setAttr -lock true -keyable false -channelBox false ($bodyRotDummy+".ry");
+
+	// Constrain dummy to car
+	
+	connectAttr -f ($bodyRotDummy+".rotateZ") ($car+$Body+".rotateZ");
+	connectAttr -f ($bodyRotDummy+".rotateX") ($car+$Body+".rotateX");
+
+	// ====================== Body Override =====================================
+	
+	curve -n $bodyOverride -d 3 -p -150 0 -200 -p -150 0 -200 -p 0 0 200 -p 0 0 200 -p 0 0 200 -p 150 0 -200 -p 150 0 -200 -k 0 -k 0 -k 0 -k 1 -k 1 -k 1 -k 2 -k 2 -k 2 ;
+	setAttr ($car+"_bodyOverride.overrideEnabled") 1;
+	setAttr ($car+"_bodyOverride.overrideColor") 17;
+	parent $bodyOverride $car;
+	
+	move -a -os $pivotX $pivotY $pivotZ $bodyOverride ;
+	
+	// Set restrictions on the adjustment dummy
+	
+	transformLimits -tx -100 100 -etx 1 1 $bodyOverride;
+	transformLimits -tz -100 100 -etz 1 1 $bodyOverride;
+	transformLimits -ry -45 45 -ery 1 1 $bodyOverride;
+	setAttr -lock true -keyable false -channelBox false ($bodyOverride+".ty");
+	setAttr -lock true -keyable false -channelBox false ($bodyOverride+".rz");
+	setAttr -lock true -keyable false -channelBox false ($bodyOverride+".rx");
+
+	
+	// Constrain body and wheels to dummy
+	
+	connectAttr -f ($bodyOverride+".rotateY") ($car+$Body+".rotateY");
+	connectAttr -f ($bodyOverride+".rotateY") ($car+$Wheels+".rotateY");
+	
+	connectAttr -f ($bodyOverride+".translateX") ($car+$Body+".translateX");
+	connectAttr -f ($bodyOverride+".translateZ") ($car+$Body+".translateZ");
+	connectAttr -f ($bodyOverride+".translateX") ($car+$Wheels+".translateX");
+	connectAttr -f ($bodyOverride+".translateZ") ($car+$Wheels+".translateZ");
+	
+		
+	
+	// =================== Expressions =======================
+	
+	// Link body roll to steering
+	$expressionText = "CarX_bodyRotDummy.rotateZ = ((CarX_steeringDummy.rotateY) + (CarX_steeringOverride.rotateY))/5";
+	$expressionText = substituteAllString($expressionText, "CarX", $car);
+	expression -n ($car+"_expression_bodyRoll") -s $expressionText -o ($car+"_bodyRotDummy") -ae 1 -uc all ;
+
+}
+
+
+// Group created nodes
+// ===================================================================================
+
+global proc spckRigCar_CreateRigHierarchy (string $car )
+{
+	//
+	// Setup names of car parts
+	//
+	
+	string $Wheels				= "_Wheels";
+	string $Body				= "_body";
+	string $bodyRotDummy	 	= $car+"_bodyRotDummy";
+	string $bodyOverride 		= $car+"_bodyOverride";
+	string $rotationDummy 		= $car+"_rotationDummy";
+	string $steeringDummy 		= $car+"_steeringDummy";
+	string $steeringOverride 	= $car+"_steeringOverride";
+	string $wheelRotOverrideFL 	= $car+"_wheelRotOverride_FL";
+	string $wheelRotOverrideFR	= $car+"_wheelRotOverride_FR";
+	string $wheelRotOverrideRL 	= $car+"_wheelRotOverride_RL";
+	string $wheelRotOverrideRR 	= $car+"_wheelRotOverride_RR";
+
+
+	// ================== Group Rig ==========================
+	
+	group -name ($car+"_Rig") -parent $car;
+	group -name ($car+"_Rig_Controls") -parent ($car+"_Rig") $bodyRotDummy $rotationDummy $steeringDummy ($car+"_controlWheels");
+	group -name ($car+"_Rig_Overrides") -parent ($car+"_Rig") $bodyOverride $steeringOverride $wheelRotOverrideFL $wheelRotOverrideFR $wheelRotOverrideRL $wheelRotOverrideRR;
+	
+	setAttr ($car+"_Rig_Overrides.visibility") 0; 					// Hide Overrides
+}

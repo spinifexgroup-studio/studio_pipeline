@@ -1,0 +1,84 @@
+// spinDuplicateAndBakeCamera v0.2
+//
+// By Daniel Harkness
+//
+// Take cameras in selection and bake to root DAG level
+//
+
+global proc spinDuplicateAndBakeCamera() {
+	
+	string $bakeFirst = "1";
+	string $bakeLast  = "100";
+
+	// Get Bake Range.
+	string $result = `promptDialog 
+		-title "Bake Range Start"
+		-message "Enter start baking frame:"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+		$bakeFirst = `promptDialog -query -text`;
+	}				  
+	else {
+		print("Please re-run the script again.\n");
+		return;
+	}
+
+	string $result = `promptDialog 
+		-title "Bake Range End"
+		-message "Enter end baking frame:"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+		$bakeLast = `promptDialog -query -text`;
+	}				  
+	else {
+		print("Please re-run the script again.\n");
+		return;
+	}
+
+	// Go through selection and do only to cameras
+	// Duplicate Camera and bake
+
+	string $bakeRange			= $bakeFirst+":"+$bakeLast;
+	string $select[] 			= `ls -selection -dag`;
+	int $i=0;
+
+	for ( $node in $select )     // process each selection
+	{
+		if ( "camera" == `nodeType $node` )
+		{
+			string $newCamera = "tempCamera";
+			string $selectCam = $select[$i-1];
+			
+			duplicate -rr -n $newCamera $selectCam;
+			
+			// Push camera to root if not in root already
+			if (isParentOf("", $newCamera)) {
+				parent -world $newCamera;
+			}
+			
+			// CONSTRAIN NEW TO OLD
+			select -r $selectCam;
+			select -add $newCamera;
+			doCreateParentConstraintArgList 1 { "0","0","0","0","0","0","0","1","","1" };
+			parentConstraint -weight 1;
+
+			bakeResults -simulation true -t $bakeRange -sampleBy 1 -disableImplicitControl true -preserveOutsideKeys true -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -bakeOnOverrideLayer false -controlPoints false -shape true {	$newCamera };
+				
+			string $finalCamera = $node + "_baked";
+			rename $newCamera $finalCamera;
+			
+			string $parentContraint = $newCamera+"_parentConstraint1";
+			delete $parentContraint;
+		}
+		$i++;
+	}
+	
+}

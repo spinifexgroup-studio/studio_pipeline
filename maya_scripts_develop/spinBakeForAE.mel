@@ -1,0 +1,127 @@
+// spinDuplicateAndBakeCamera v0.2
+//
+// By Daniel Harkness
+//
+// Take cameras in selection and bake to root DAG level
+//
+
+global proc spinBakeForAE () {
+
+	string $bakedDataforAE = "BakedDataForAE";
+
+	if ( objExists ($bakedDataforAE)) {
+		confirmDialog -message "Aborting. The scene already contains data for AE";
+		print("Aborted.\n");
+		return;
+	}
+
+	
+	string $bakeFirst;
+	string $bakeLast;
+
+	// Get Bake Range.
+	string $result = `promptDialog 
+		-title "Bake Range Start"
+		-message "Enter start baking frame:"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+		$bakeFirst = `promptDialog -query -text`;
+	}				  
+	else {
+		print("Aborted.\n");
+		return;
+	}
+
+	string $result = `promptDialog 
+		-title "Bake Range End"
+		-message "Enter end baking frame:"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+		$bakeLast = `promptDialog -query -text`;
+	}				  
+	else {
+		print("Aborted.\n");
+		return;
+	}
+
+	// Go through selection and do only to cameras and locators starting with "null"
+	// Duplicate Camera and bake
+
+	string $bakeRange			= $bakeFirst+":"+$bakeLast;
+	string $selectedItems[] 	= `ls -selection -dag`;
+	
+	
+	// If nothing is selected, select everything
+	
+	if (size($selectedItems) == 0) {
+		$selectedItems = `ls -dag`;
+	}
+	
+	// Get list of objects to duplicate
+	
+	string $objectsToDuplicate[];
+	int $i = 0;
+
+	for ( $node in $selectedItems )     // process each selection
+	{
+		string $objType = `nodeType $node`;
+		if (  $objType == "camera" ||  $objType == "locator" )
+		{
+		
+			string $object;
+			$object = $selectedItems[$i-1];
+			
+			if ( stringArrayContains ($object, $objectsToDuplicate))
+			{
+				confirmDialog -message "Aborting. Objects require unique names";
+				print("Aborted.\n");
+				return;
+			}
+			
+			if (  $objType == "camera" ||  (startsWith( tolower ($object) , "null")) )
+			{
+				stringArrayInsertAtIndex(size($objectsToDuplicate), $objectsToDuplicate, $object);
+			}
+		}
+		$i++;
+	}
+	
+	// Duplicate and parent objects
+	
+	group -em -n $bakedDataforAE;
+	string $duplicateObjects[];
+	
+	for ( $object in $objectsToDuplicate )
+	{
+		string $duplicateObject = $object+"_tempDuplicate";
+		duplicate -rr -n $duplicateObject $object;
+			
+		parent $duplicateObject $bakedDataforAE;
+		
+		stringArrayInsertAtIndex(size($duplicateObjects), $duplicateObjects, $duplicateObject);
+
+		// CONSTRAIN NEW TO OLD
+		select -r $object;
+		select -add $duplicateObject;
+		doCreateParentConstraintArgList 1 { "1","0","0","0","0","0","0","1","","1" };
+		parentConstraint -n ($object+"_tempParentConstraint") -mo -weight 1;
+
+
+	}
+
+	//bakeResults -simulation true -t $bakeRange -sampleBy 1 -disableImplicitControl true -preserveOutsideKeys true -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -bakeOnOverrideLayer false -controlPoints false -shape true { (stringArrayToString ( $duplicateObjects, " ")) };
+	bakeResults -simulation true -t $bakeRange -sampleBy 1 -disableImplicitControl true -preserveOutsideKeys true -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -bakeOnOverrideLayer false -controlPoints false -shape true $duplicateObjects;
+	
+	for ( $object in $objectsToDuplicate ) {
+		rename ($object+"_tempDuplicate") $object;
+		delete ($object+"_tempParentConstraint");
+	}
+}

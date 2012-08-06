@@ -1,0 +1,154 @@
+// spckDuplicateCar_v0.1.mel
+//
+// By Daniel Harkness
+
+// The following code will create a dialogue box allowing the user
+// to input the name of the car he is working on.
+
+// Names of car parts in strings
+
+global proc spckDuplicateCar() {
+
+	string $CarSource 			= "CarY";
+	string $CarDestination		= "CarZ";
+	
+	int $shouldProceed			= 0;
+
+	// Creating a dialogue box to request the car name.
+	string $result = `promptDialog 
+		-title "spckAddCar"
+		-message "Your car will be duplicated with a duplicate input graph.\n\nEnter Letter of car to duplicate:"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+	
+		// Query the entry typed by the user and then use it for variable CarAString.
+		$CarSource = `promptDialog -query -text`;
+		
+		if (size ($CarSource) == 1) {
+			if (isValidString ($CarSource, "([a-zA-Z]+)([a-zA-Z])*")){
+				$CarSource = toupper ($CarSource);
+				$CarSource = "Car"+$CarSource;
+				if ( !`objExists $CarSource`){
+					print("That car doesn't exist.\n");
+					return;
+				}
+			}
+			else{
+				print("Invalid Character. Please re-run the script again.\n"); return;
+			}
+		}
+		else{
+			print("Invalid Character. Please re-run the script again.\n"); return;
+		}
+	}				  
+	else {
+		print("Please re-run the script again.\n"); return;
+	}
+
+	// Creating a dialogue box to request the car name destination.
+	string $result = `promptDialog 
+		-title "spckAddCar"
+		-message "Enter destination letter of duplicate car:"
+		-button "OK" -button "Cancel"
+		-defaultButton "OK" -cancelButton "Cancel"
+		-dismissString "Cancel"`;
+	
+	// If OK pressed on the dialogue box...
+	if ($result == "OK") {
+	
+		// Query the entry typed by the user and then use it for variable CarAString.
+		$CarDestination = `promptDialog -query -text`;
+		
+		if (size ($CarDestination) == 1) {
+			if (isValidString ($CarDestination, "([a-zA-Z]+)([a-zA-Z])*")){
+				$CarDestination = toupper ($CarDestination);
+				$CarDestination = "Car"+$CarDestination;
+				if ( `objExists $CarDestination`){
+					print("That car already exist.\n");
+					return;
+				}
+				else if ($CarSource == $CarDestination ){
+					print("The letters are the same.\n");
+					return;
+				}
+			}
+			else{
+				print("Invalid Character. Please re-run the script again.\n"); return;
+			}
+		}
+		else{
+			print("Invalid Character. Please re-run the script again.\n"); return;
+		}
+	}				  
+	else {
+		print("Please re-run the script again.\n"); return;
+	}
+	
+	//
+	//
+	// Duplicate Objects
+	//
+	//
+	
+	duplicate -rr -un -rc -n $CarDestination $CarSource;
+	select -r $CarDestination;
+	
+	//
+	//
+	// Iterate through all objects and rename
+	//
+	//
+	
+	string  $allObjects[];
+	string  $obj;
+	$allObjects = `ls -sl -dag -shapes`;
+	for ( $obj in $allObjects ) {
+		if (startsWith($obj, $CarSource)) {
+			string $destObj = substituteAllString( $obj , $CarSource , $CarDestination);
+
+			// Strip the "1" we added to the end of the file names
+			$destObj = `substring $destObj 1 (size($destObj)-1)`;
+
+			print $obj;
+			print "     renaming to     ";
+			print ($destObj+"\n");
+			rename $obj $destObj;
+		}
+	}
+
+	select -r $CarDestination;
+
+	$allObjects = `ls -sl -dag`;
+	for ( $obj in $allObjects ) {
+		if (startsWith($obj, $CarSource)) {
+			string $destObj = substituteAllString( $obj , $CarSource , $CarDestination);
+
+			// Strip the "1" we added to the end of the file names
+			$destObj = `substring $destObj 1 (size($destObj)-1)`;
+			
+			print $obj;
+			print "     renaming to     ";
+			print ($destObj+"\n");
+			rename $obj $destObj;
+		}
+	}
+
+
+	
+	select -cl;
+	
+	// Give some feedback for next steps
+	
+	string $message = "\n"+$CarSource+" has been duplicated as "+$CarDestination+".";
+	
+	string $result = `confirmDialog 
+		-title "spckDuplicateCar Success!"
+		-message $message
+		-button "OK"
+		-defaultButton "OK"`;
+	print "Complete.\n";
+}
