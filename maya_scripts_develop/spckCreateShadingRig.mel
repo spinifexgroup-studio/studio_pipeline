@@ -47,6 +47,7 @@ global proc spckCreateShadingRig() {
 	shadingNode -name ($vrDomeLight+"Shape") -asLight VRayLightDomeShape -parent $vrDomeLight;
 	setAttr ($vrDomeLight+".translateY") 150;
 	setAttr ($vrDomeLight+"Shape.invisible") 1;
+	setAttr ($vrDomeLight+"Shape.domeSpherical") 1;
 	
 	setAttr ($vrDomeLight+"Shape.colorMode") 1;
 	setAttr ($vrDomeLight+"Shape.useDomeTex") 1;

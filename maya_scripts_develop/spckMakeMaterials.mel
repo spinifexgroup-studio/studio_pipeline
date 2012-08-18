@@ -637,6 +637,7 @@ global proc spckMakePaintMaterials() {
 	string $paintSilver		= "VR_Paint_Silver";
 	string $paintWhite		= "VR_Paint_White";
 	string $paintBlack		= "VR_Paint_Black";
+	/*
 	string $paintDarkGrey	= "VR_Paint_DarkGrey";
 	string $paintChampagne	= "VR_Paint_Champagne";
 	string $paintDarkRed	= "VR_Paint_DarkRed";
@@ -645,9 +646,14 @@ global proc spckMakePaintMaterials() {
 	string $paintBlue		= "VR_Paint_Blue";
 	string $paintNavy		= "VR_Paint_Navy";
 	string $paintYellow		= "VR_Paint_Yellow";	
-
-	string $paintBin 		= "Car_Paint";	
+	*/
+		
+	string $materialList[] = { $paintSilver,
+							$paintWhite,
+							$paintBlack
+							};
 	
+	/*
 	string $materialList[] = { $paintSilver,
 							$paintWhite,
 							$paintBlack,
@@ -660,7 +666,9 @@ global proc spckMakePaintMaterials() {
 							$paintNavy,
 							$paintYellow
 							};
+	*/					
 							
+	string $paintBin 		= "Car_Paint";	
 							
 	// Check if paint shader exists - if not create it - add to paint bin
 	for ($material in $materialList) {
@@ -685,13 +693,19 @@ global proc spckMakePaintMaterials() {
 			shadingNode -n ($material+"_coatSampler") -asUtility samplerInfo;
 			shadingNode -n ($material+"_baseSurfaceLuma") -asUtility surfaceLuminance;
 			
+			spinCreateLinearGammaUtility ( ($material+"_baseRamp_gamma") );
+			spinCreateLinearGammaUtility ( ($material+"_coatRamp_gamma") );
+			
 			//Connect everything up
 	
 			connectAttr -f ($material+"_coatSampler.facingRatio") ($material+"_coatRamp.vCoord");
 			connectAttr -f ($material+"_baseSurfaceLuma.outValue") ($material+"_baseRamp.vCoord");
 
-			connectAttr -f ($material+"_baseRamp.outColor") ($material+"_base.color");
-			connectAttr -f ($material+"_coatRamp.outColor") ($material+"_coat.color");
+			connectAttr -f ($material+"_baseRamp.outColor") ($material+"_baseRamp_gamma.value");
+			connectAttr -f ($material+"_coatRamp.outColor") ($material+"_coatRamp_gamma.value");
+			
+			connectAttr -f ($material+"_baseRamp_gamma.outValue") ($material+"_base.color");
+			connectAttr -f ($material+"_coatRamp_gamma.outValue") ($material+"_coat.color");
 
 			connectAttr -f ($material+"_ramps_place2dTexture.outUV") ($material+"_baseRamp.uvCoord");
 			connectAttr -f ($material+"_ramps_place2dTexture.outUvFilterSize") ($material+"_baseRamp.uvFilterSize");
@@ -700,31 +714,37 @@ global proc spckMakePaintMaterials() {
 			connectAttr -f ($material+"_ramps_place2dTexture.outUvFilterSize") ($material+"_coatRamp.uvFilterSize");
 
 			//Setup Ramps
-			
+			/*
 			setAttr ($material+"_baseRamp.colorEntryList[0].position") 0;
 			setAttr ($material+"_baseRamp.colorEntryList[1].position") 0.4;
 			setAttr ($material+"_baseRamp.colorEntryList[2].position") 0.95;
 			setAttr ($material+"_baseRamp.colorEntryList[3].position") 1;
 
-			setAttr ($material+"_baseRamp.colorEntryList[0].color") -type double3 0.9 0.96 1;
-			setAttr ($material+"_baseRamp.colorEntryList[1].color") -type double3 0.27 0.27 0.3;
-			setAttr ($material+"_baseRamp.colorEntryList[2].color") -type double3 0.85 0.85 0.8;
-			setAttr ($material+"_baseRamp.colorEntryList[3].color") -type double3 0.9 0.9 0.86;
+			setAttr ($material+"_baseRamp.colorEntryList[0].color") -type double3 0.90   0.96   0.10;
+			setAttr ($material+"_baseRamp.colorEntryList[1].color") -type double3 0.27   0.30   0.30;
+			setAttr ($material+"_baseRamp.colorEntryList[2].color") -type double3 0.85   0.85   0.83;
+			setAttr ($material+"_baseRamp.colorEntryList[3].color") -type double3 0.90   0.87   0.88;
+			*/
 
 			setAttr ($material+"_coatRamp.colorEntryList[0].position") 0;
 			setAttr ($material+"_coatRamp.colorEntryList[1].position") 0.4;
 			setAttr ($material+"_coatRamp.colorEntryList[2].position") 0.95;
 			setAttr ($material+"_coatRamp.colorEntryList[3].position") 1;
 
-			setAttr ($material+"_coatRamp.colorEntryList[0].color") -type double3 0.9 0.96 1;
-			setAttr ($material+"_coatRamp.colorEntryList[1].color") -type double3 0.27 0.27 0.3;
-			setAttr ($material+"_coatRamp.colorEntryList[2].color") -type double3 0.85 0.85 0.8;
-			setAttr ($material+"_coatRamp.colorEntryList[3].color") -type double3 0.9 0.9 0.86;
+			setAttr ($material+"_coatRamp.colorEntryList[0].color") -type double3 0.09   0.10   0.10;
+			setAttr ($material+"_coatRamp.colorEntryList[1].color") -type double3 0.27   0.30   0.30;
+			setAttr ($material+"_coatRamp.colorEntryList[2].color") -type double3 0.85   0.85   0.83;
+			setAttr ($material+"_coatRamp.colorEntryList[3].color") -type double3 0.90   0.87   0.88;
 
 			for ($i = 0; $i < 4 ; $i++ ) {
 				connectAttr -f ($material+"_coatRamp.colorEntryList["+$i+"].position") ($material+"_baseRamp.colorEntryList["+$i+"].position");
 				connectAttr -f ($material+"_coatRamp.colorEntryList["+$i+"].color") ($material+"_baseRamp.colorEntryList["+$i+"].color");
 			}
+			
+			// Remove flakes
+			setAttr ($material+"_base.flake_density") 0;
+			setAttr ($material+"_coat.flake_density") 0;
+
 		}
 		select -r $material;
 		binMembership -add $paintBin;
