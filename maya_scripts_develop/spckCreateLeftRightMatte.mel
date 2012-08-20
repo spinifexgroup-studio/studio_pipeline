@@ -1,4 +1,4 @@
-// spckMakeLeftRightMatte_v0.1.mel
+// spckCreateLeftRightMatte_v0.1.mel
 //
 // By Daniel Harkness
 //
@@ -6,7 +6,7 @@
 
 source "spckGetSelectedCar.mel";
 
-global proc spckMakeLeftRightMatte() {
+global proc spckCreateLeftRightMatte() {
 
 	// Return car name without namespace
 	string $car = spckGetSelectedCar ();	

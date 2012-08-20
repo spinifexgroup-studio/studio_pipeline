@@ -4,14 +4,14 @@
 //
 // Setup scene according to car kit guidelines
 
-source "spckMakeMaterials.mel";
+source "spckCreateMaterials.mel";
 
 global proc spckSetupScene() {
 
 	// Set up some variables
 
-	int $spckDefaultWidth = 1920;
-	int $spckDefaultHeight= 720;
+	int $spckDefaultWidth = 640;
+	int $spckDefaultHeight= 480;
 	
 	string $renderLayerVehicle 					= "vehicle";
 	string $renderLayerBackground 				= "background";
@@ -91,7 +91,13 @@ global proc spckSetupScene() {
 	setAttr vraySettings.sRGBOn 1;
 	setAttr vraySettings.cmap_affectBackground 1;
 
-	//Add render elements
+	// Setup some materials that can be used for matte and tech functions
+
+	spckCreateMatteMaterials();
+	spckCreateTechMaterials();
+
+
+	//Add common render elements
 
 	vrayAddRenderElement diffuseChannel;
 	vrayAddRenderElement reflectChannel;
@@ -99,11 +105,26 @@ global proc spckSetupScene() {
 	vrayAddRenderElement specularChannel;
 	vrayAddRenderElement lightingChannel;
 	vrayAddRenderElement giChannel;
-	vrayAddRenderElement zdepthChannel;
 	vrayAddRenderElement normalsChannel;
 	
+	//Setup AO
+	
+	vrayAddRenderElement ExtraTexElement;
+	rename "vrayRE_Extra_Tex" "vrayRE_AO";
+	connectAttr -force "VR_AO.outColor" "vrayRE_AO.vray_texture_extratex";
+	setAttr "vrayRE_AO.vray_name_extratex" -type "string" "AO";
+
+
+	//Setup Depth
+	vrayAddRenderElement zdepthChannel;
+	rename "vrayRE_Z_depth" "vrayRE_Z_depthAA";
+	vrayAddRenderElement zdepthChannel;
+
+	setAttr "vrayRE_Z_depthAA.vray_depthFromCamera_zdepth" 1;
+	setAttr "vrayRE_Z_depthAA.vray_depthClamp" 0;
 	setAttr "vrayRE_Z_depth.vray_depthFromCamera_zdepth" 1;
 	setAttr "vrayRE_Z_depth.vray_depthClamp" 0;
+	setAttr "vrayRE_Z_depth.vray_filtering_zdepth" 0;
 	
 	// Turn off render elements - these are the common ones we turn back on if needed
 
@@ -115,6 +136,8 @@ global proc spckSetupScene() {
 	setAttr "vrayRE_Refraction.enabled" 		0;
 	setAttr "vrayRE_Specular.enabled" 			0;
 	setAttr "vrayRE_Z_depth.enabled" 			0;
+	setAttr "vrayRE_Z_depthAA.enabled" 			0;
+	setAttr "vrayRE_AO.enabled" 				0;
 	
 	// Create default layers for car work
 
@@ -192,10 +215,6 @@ global proc spckSetupScene() {
 	editRenderLayerGlobals -currentRenderLayer "defaultRenderLayer";
 	select -cl;
 	
-	// Setup some materials that can be used for matte functions
-
-	spckMakeMatteMaterials();
-
 	/*
 	//	set up some scale reference
 	

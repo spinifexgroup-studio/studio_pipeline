@@ -12,17 +12,18 @@ source "spinCreateLinearGammaUtility.mel";
 //
 //
 
-global proc spckMakeMaterials() {
+global proc spckCreateMaterials() {
 
-	spckMakeMatteMaterials();
-	spckMakePlasticMaterials();
-	spckMakeLightMaterials();
-	spckMakeMetalMaterials();
-	spckMakeChromeMaterials();
-	spckMakeWheelMaterials();
-	spckMakeBrakeMaterials();
-	spckMakeWindowMaterials();
-	spckMakePaintMaterials();
+	spckCreateMatteMaterials();
+	spckCreatePlasticMaterials();
+	spckCreateLightMaterials();
+	spckCreateMetalMaterials();
+	spckCreateChromeMaterials();
+	spckCreateWheelMaterials();
+	spckCreateBrakeMaterials();
+	spckCreateWindowMaterials();
+	spckCreatePaintMaterials();
+	spckCreateTechMaterials();
 
 }
 
@@ -33,7 +34,7 @@ global proc spckMakeMaterials() {
 //
 //
 
-global proc spckMakeMatteMaterials() {
+global proc spckCreateMatteMaterials() {
 
 	string $matteBlack 		= "ssMatteBlack";
 	string $matteWhite 		= "ssMatteWhite";
@@ -41,8 +42,8 @@ global proc spckMakeMatteMaterials() {
 	string $matteGreen 		= "ssMatteGreen";
 	string $matteBlue 		= "ssMatteBlue";
 	
-	string $matteBin		= "mattes";
-	string $matteSolidBin   = "mattesSolid";
+	string $matteBin		= "Mattes";
+	string $matteSolidBin   = "Mattes_Solid";
 	
 	// Check if matte shader exists - if not create it - add to mattes bin
 	
@@ -115,7 +116,7 @@ global proc spckMakeMatteMaterials() {
 //
 //
 
-global proc spckMakePlasticMaterials() {
+global proc spckCreatePlasticMaterials() {
 
 	string $plasticBlackMatte 		= "VR_Plastic_Black_Matte";
 	string $plasticBlackGloss 		= "vr_Plastic_Black_Gloss";
@@ -176,7 +177,7 @@ global proc spckMakePlasticMaterials() {
 //
 //
 
-global proc spckMakeLightMaterials() {
+global proc spckCreateLightMaterials() {
 
 	string $plasticClearThin		= "vrPlasticClearThin";
 	string $plasticClearThick		= "vrPlasticClearThick";
@@ -187,7 +188,7 @@ global proc spckMakeLightMaterials() {
 	string $bulbClearThin			= "vrBulbClearThin";
 	string $bulbClearThick			= "vrBulbClearThick";
 
-	string $lightsBin		= "carLights";
+	string $lightsBin		= "Car_Lights";
 	
 	string $materialList[] = { $plasticClearThin,
 							$plasticClearThick,
@@ -241,7 +242,7 @@ global proc spckMakeLightMaterials() {
 //
 //
 
-global proc spckMakeMetalMaterials() {
+global proc spckCreateMetalMaterials() {
 
 	string $metalUnderCarriage	= "vrMetalUnderCarriage";
 	string $metalBlackGloss		= "vrMetalBlackGloss";
@@ -249,8 +250,8 @@ global proc spckMakeMetalMaterials() {
 	string $metalSteelGloss		= "vrMetalSteelGloss";
 	string $metalSteelMatte		= "vrMetalSteelMatte";
 	
-	string $metalBin		= "carMetal";
-	string $partsBin		= "carParts";
+	string $metalBin		= "Car_Metals";
+	string $partsBin		= "Car_Parts";
 
 	string $materialList[] = { $metalUnderCarriage,
 							$metalBlackGloss,
@@ -296,7 +297,7 @@ global proc spckMakeMetalMaterials() {
 //
 //
 
-global proc spckMakeChromeMaterials() {
+global proc spckCreateChromeMaterials() {
 
 	string $chrome			= "VR_Chrome";
 	string $chromeLowSheen	= "VR_Chrome_LowSheen";
@@ -304,8 +305,8 @@ global proc spckMakeChromeMaterials() {
 	string $chromeBlue		= "VR_Chrome_Blue";
 	string $chromeLights	= "VR_Chrome_Lights";
 
-	string $chromeBin		= "car_Chrome";
-	string $lightsBin		= "car_Lights";
+	string $chromeBin		= "Car_Chrome";
+	string $lightsBin		= "Car_Lights";
 	string $partsBin		= "car_Parts";
 
 	string $materialList[] = { $chrome,
@@ -360,7 +361,7 @@ global proc spckMakeChromeMaterials() {
 //
 //
 
-global proc spckMakeWheelMaterials() {
+global proc spckCreateWheelMaterials() {
 
 	string $alloyMatte		= "VR_Alloy_Matte";
 	string $alloyGloss		= "VR_Alloy_Gloss";
@@ -447,13 +448,13 @@ global proc spckMakeWheelMaterials() {
 //
 //
 
-global proc spckMakeBrakeMaterials() {
+global proc spckCreateBrakeMaterials() {
 
 	string $metalDisc			= "VR_Metal_Brake_Disc";
 	string $metalCalliperSteel	= "VR_Metal_Brake_Calliper_Steel";
 
 	string $brakeBin			= "Car_Brakes";
-	string $metalBin			= "Car_Metals";
+	string $metalBin			= "Car_Metalss";
 	
 	string $materialList[] = { $metalDisc,
 							$metalCalliperSteel
@@ -590,7 +591,7 @@ global proc spckMakeBrakeMaterials() {
 //
 //
 
-global proc spckMakeWindowMaterials() {
+global proc spckCreateWindowMaterials() {
 
 	string $glassTintBlackOpaque		= "vrGlassTintedOpaque";
 	string $glassTintBlackDarkThick		= "vrGlassTintedDarkThick";
@@ -598,7 +599,7 @@ global proc spckMakeWindowMaterials() {
 	string $glassTintBlackLightThick	= "vrGlassTintedLightThick";
 	string $glassTintBlackLightThin		= "vrGlassTintedLightThin";
 
-	string $windowBin					= "carWindowGlass";
+	string $windowBin					= "Car_Window_Glass";
 	
 	string $materialList[] = { $glassTintBlackOpaque,
 							$glassTintBlackDarkThick,
@@ -632,7 +633,7 @@ global proc spckMakeWindowMaterials() {
 //
 //
 
-global proc spckMakePaintMaterials() {
+global proc spckCreatePaintMaterials() {
 
 	string $paintSilver		= "VR_Paint_Silver";
 	string $paintWhite		= "VR_Paint_White";
@@ -677,6 +678,7 @@ global proc spckMakePaintMaterials() {
 			shadingNode -n $material -asShader VRayBlendMtl;
 			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
 			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+
 			
 			//create nodes for connection
 			shadingNode -n ($material+"_base") -asShader VRayCarPaintMtl;
@@ -692,6 +694,7 @@ global proc spckMakePaintMaterials() {
 			
 			shadingNode -n ($material+"_coatSampler") -asUtility samplerInfo;
 			shadingNode -n ($material+"_baseSurfaceLuma") -asUtility surfaceLuminance;
+			shadingNode -n ($material+"_baseSurfaceLumaClamp") -asUtility clamp;
 			
 			spinCreateLinearGammaUtility ( ($material+"_baseRamp_gamma") );
 			spinCreateLinearGammaUtility ( ($material+"_coatRamp_gamma") );
@@ -699,7 +702,10 @@ global proc spckMakePaintMaterials() {
 			//Connect everything up
 	
 			connectAttr -f ($material+"_coatSampler.facingRatio") ($material+"_coatRamp.vCoord");
-			connectAttr -f ($material+"_baseSurfaceLuma.outValue") ($material+"_baseRamp.vCoord");
+			connectAttr -f ($material+"_baseSurfaceLuma.outValue") ($material+"_baseSurfaceLumaClamp.inputR");
+			connectAttr -f ($material+"_baseSurfaceLuma.outValue") ($material+"_baseSurfaceLumaClamp.inputG");
+			connectAttr -f ($material+"_baseSurfaceLuma.outValue") ($material+"_baseSurfaceLumaClamp.inputB");
+			connectAttr -f ($material+"_baseSurfaceLumaClamp.outputR") ($material+"_baseRamp.vCoord");
 
 			connectAttr -f ($material+"_baseRamp.outColor") ($material+"_baseRamp_gamma.value");
 			connectAttr -f ($material+"_coatRamp.outColor") ($material+"_coatRamp_gamma.value");
@@ -714,17 +720,17 @@ global proc spckMakePaintMaterials() {
 			connectAttr -f ($material+"_ramps_place2dTexture.outUvFilterSize") ($material+"_coatRamp.uvFilterSize");
 
 			//Setup Ramps
-			/*
+			
 			setAttr ($material+"_baseRamp.colorEntryList[0].position") 0;
-			setAttr ($material+"_baseRamp.colorEntryList[1].position") 0.4;
+			setAttr ($material+"_baseRamp.colorEntryList[1].position") 0.3;
 			setAttr ($material+"_baseRamp.colorEntryList[2].position") 0.95;
 			setAttr ($material+"_baseRamp.colorEntryList[3].position") 1;
 
-			setAttr ($material+"_baseRamp.colorEntryList[0].color") -type double3 0.90   0.96   0.10;
+			setAttr ($material+"_baseRamp.colorEntryList[0].color") -type double3 0.09   0.10   0.10;
 			setAttr ($material+"_baseRamp.colorEntryList[1].color") -type double3 0.27   0.30   0.30;
 			setAttr ($material+"_baseRamp.colorEntryList[2].color") -type double3 0.85   0.85   0.83;
 			setAttr ($material+"_baseRamp.colorEntryList[3].color") -type double3 0.90   0.87   0.88;
-			*/
+			
 
 			setAttr ($material+"_coatRamp.colorEntryList[0].position") 0;
 			setAttr ($material+"_coatRamp.colorEntryList[1].position") 0.4;
@@ -736,21 +742,59 @@ global proc spckMakePaintMaterials() {
 			setAttr ($material+"_coatRamp.colorEntryList[2].color") -type double3 0.85   0.85   0.83;
 			setAttr ($material+"_coatRamp.colorEntryList[3].color") -type double3 0.90   0.87   0.88;
 
+			/*
 			for ($i = 0; $i < 4 ; $i++ ) {
 				connectAttr -f ($material+"_coatRamp.colorEntryList["+$i+"].position") ($material+"_baseRamp.colorEntryList["+$i+"].position");
 				connectAttr -f ($material+"_coatRamp.colorEntryList["+$i+"].color") ($material+"_baseRamp.colorEntryList["+$i+"].color");
 			}
+			*/
+			
+			//Setup Clamp
+			
+			setAttr ($material+"_baseSurfaceLumaClamp.maxR") 1.0;
+			setAttr ($material+"_baseSurfaceLumaClamp.maxG") 1.0;
+			setAttr ($material+"_baseSurfaceLumaClamp.maxB") 1.0;
 			
 			// Remove flakes
 			setAttr ($material+"_base.flake_density") 0;
 			setAttr ($material+"_coat.flake_density") 0;
 
 		}
+				
 		select -r $material;
 		binMembership -add $paintBin;
+
 	}
+}
+//
+//
+// Add essential plastic materials
+//
+//
+
+global proc spckCreateTechMaterials() {
+
+	string $aoMaterial 				= "VR_AO";
+	string $worldUvMaterial 		= "VR_World_UV";
+	string $upDownMaterial 			= "VR_Up_Down";
+	
+	string $techBin					= "Technical";
 	
 
+	// Create AO
+	shadingNode -n $aoMaterial -asShader VRayMtl;
+	sets -renderable true -noSurfaceShader true -empty -name ($aoMaterial+"SG");
+	connectAttr -f ($aoMaterial+".outColor") ($aoMaterial+"SG.surfaceShader");
+	
+	shadingNode -n ($aoMaterial+"_dirt") -asTexture VRayDirt;
+	shadingNode -n ($aoMaterial+"_dirt_place2dTexture") -asUtility place2dTexture;
+	connectAttr ($aoMaterial+"_dirt_place2dTexture.outUV") ($aoMaterial+"_dirt.uv");
+	connectAttr ($aoMaterial+"_dirt_place2dTexture.outUvFilterSize") ($aoMaterial+"_dirt.uvFilterSize");
+	connectAttr -f ($aoMaterial+"_dirt.outColor") ($aoMaterial+".color");
+
+	select -r $aoMaterial;
+	binMembership -add $techBin;	
 }
+
 
 

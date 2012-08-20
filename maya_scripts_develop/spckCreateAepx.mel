@@ -4,7 +4,7 @@
 
 // Make aepx file for a selected camera and place in _exchange folder
 
-global proc spckMakeAepx() {
+global proc spckCreateAepx() {
 
 
 	//
@@ -85,7 +85,7 @@ global proc spckMakeAepx() {
 	
 	
 	string $result = `confirmDialog 
-		-title "spckMakeAepx"
+		-title "spckCreateAepx"
 		-message "Do you required manual override?"
 		-button "YES" -button "NO"
 		-defaultButton "NO" -cancelButton "NO"
@@ -98,7 +98,7 @@ global proc spckMakeAepx() {
 
 		// Creating a dialogue box to request the shot digits.
 		string $result = `promptDialog 
-			-title "spckMakeAepx"
+			-title "spckCreateAepx"
 			-message "Enter Shot Number as XXXX digits:"
 			-button "OK" -button "Cancel"
 			-defaultButton "OK" -cancelButton "Cancel"
@@ -131,7 +131,7 @@ global proc spckMakeAepx() {
 	
 		// Creating a dialogue box to request the shot long name.
 		string $result = `promptDialog 
-			-title "spckMakeAepx"
+			-title "spckCreateAepx"
 			-message "Enter camera as it appears in the render.\ni.e. %c in Render Settings:Image File Output:"
 			-button "OK" -button "Cancel"
 			-defaultButton "OK" -cancelButton "Cancel"
@@ -155,7 +155,7 @@ global proc spckMakeAepx() {
 	
 		// Creating a dialogue box to request the scene digits.
 		string $result = `promptDialog 
-			-title "spckMakeAepx"
+			-title "spckCreateAepx"
 			-message "Enter Scene Number as XXXX digits:"
 			-button "OK" -button "Cancel"
 			-defaultButton "OK" -cancelButton "Cancel"
@@ -188,7 +188,7 @@ global proc spckMakeAepx() {
 	
 		// Creating a dialogue box to request the scene long name.
 		string $result = `promptDialog 
-			-title "spckMakeAepx"
+			-title "spckCreateAepx"
 			-message "Enter scene name.\ni.e. %s in Render Settings:Image File Output:"
 			-button "OK" -button "Cancel"
 			-defaultButton "OK" -cancelButton "Cancel"

@@ -1,11 +1,11 @@
-// spckMakeObstructionMatte_v0.1.mel
+// spckCreateObstructionMatte_v0.1.mel
 //
 // By Daniel Harkness
 //
 // Make Obstruction Matte
 
 
-global proc spckMakeObstructionMatte() {
+global proc spckCreateObstructionMatte() {
 
 	editRenderLayerMembers -remove -noRecurse "matteObstruction" `ls -dag`;					// Remove all objects
 	editRenderLayerMembers -noRecurse "matteObstruction" `ls -dag`;							// Add all objects
@@ -41,7 +41,7 @@ global proc spckMakeObstructionMatte() {
 	select -cl;
 
 	string $result = `confirmDialog 
-		-title "spckMakeObstructionMatte Success!"
+		-title "spckCreateObstructionMatte Success!"
 		-message "\nAll cars are black and all other objects are white on the render layer \"matteObstruction\""
 		-button "OK"
 		-defaultButton "OK"`;

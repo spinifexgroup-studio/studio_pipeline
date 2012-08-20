@@ -1,4 +1,4 @@
-// spckMakeTrailMatte_v0.1.mel
+// spckCreateTrailMatte_v0.1.mel
 //
 // By Daniel Harkness
 //
@@ -6,7 +6,7 @@
 
 source "spckGetSelectedCar.mel";
 
-global proc spckMakeTrailMatte() {
+global proc spckCreateTrailMatte() {
 
 	// Return car name without namespace
 	string $car = spckGetSelectedCar ();	

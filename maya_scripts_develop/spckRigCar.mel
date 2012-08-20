@@ -356,8 +356,21 @@ global proc spckRigCar_CentreWheelPivots ( string $car )
 		}		
 		$pivotY = ($bounds[1]+$bounds[4])/2;
 		$pivotZ = ($bounds[2]+$bounds[5])/2;
-		move -a -os $pivotX $pivotY $pivotZ ($wheel+".scalePivot") ($wheel+".rotatePivot");
-		move -a -os $pivotX $pivotY $pivotZ ($brake+".scalePivot") ($brake+".rotatePivot");
+		
+		// Move wheel to centre - then move back - this moves translate pivot to something useable by other 3d programs.
+		
+		move -a -ws (-$pivotX) (-$pivotY) (-$pivotZ) $wheel $brake;
+		refresh;
+		
+		select -r $wheel;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;				// Freeze transform on the wheels
+		
+		select -r $brake;
+		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;				// Freeze transform on the brakes
+		
+		move -a -ws $pivotX $pivotY $pivotZ $wheel $brake;
+		refresh;
+		
 	}
 	
 	select -cl;
@@ -421,23 +434,7 @@ global proc spckRigCar_CentreWheelsToAxes ( string $car )
 	move -r -os -wd  0 0 $moveZR ($car + $WheelRear_R);
 	move -r -os -wd  0 0 $moveZR ($car + $BrakeRear_R);
 	
-	
-	$selectedGroup = `select -r ($car + $WheelRear_L)`;
-	$select = `ls -sl`;
-	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the wheels
 
-	$selectedGroup = `select -r ($car + $WheelRear_R)`;
-	$select = `ls -sl`;
-	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the wheels
-
-	$selectedGroup = `select -r ($car + $BrakeRear_L)`;
-	$select = `ls -sl`;
-	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the brake
-
-	$selectedGroup = `select -r ($car + $BrakeRear_L)`;
-	$select = `ls -sl`;
-	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the brake
-	
 	//
 	// Align front wheels
 	//
@@ -460,22 +457,6 @@ global proc spckRigCar_CentreWheelsToAxes ( string $car )
 	move -r -os -wd  0 0 $moveZR ($car + $BrakeFront_R);
 	
 	
-	$selectedGroup = `select -r ($car + $WheelFront_L)`;
-	$select = `ls -sl`;
-	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the wheels
-
-	$selectedGroup = `select -r ($car + $WheelFront_R)`;
-	$select = `ls -sl`;
-	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the wheels
-
-	$selectedGroup = `select -r ($car + $BrakeFront_L)`;
-	$select = `ls -sl`;
-	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the brake
-
-	$selectedGroup = `select -r ($car + $BrakeFront_L)`;
-	$select = `ls -sl`;
-	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;		// Freeze transform on the brake
-
 	select -cl;
 }
 
