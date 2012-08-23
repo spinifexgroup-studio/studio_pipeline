@@ -1071,7 +1071,7 @@ global proc spckCreateTechMaterials() {
 	/*
 	// Create TopDown
 	if (!objExists($topDowntex)){
-		catchQuiet ( vrayCreateNodeFromDll ($topDowntex, "texture", "TexFalloff", 2));
+		catchQuiet ( $node = vrayCreateNodeFromDll ($topDowntex, "texture", "TexFalloff", 2)); //suppress error on making texture - may break in future
 		setAttr ($topDowntex+".color1") -type double3 1 0 0 ;
 		setAttr ($topDowntex+".color2") -type double3 1 0 0 ;
 		setAttr ($topDowntex+".direction_type") 2;
