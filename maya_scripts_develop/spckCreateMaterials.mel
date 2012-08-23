@@ -36,11 +36,11 @@ global proc spckCreateMaterials() {
 
 global proc spckCreateMatteMaterials() {
 
-	string $matteBlack 		= "ssMatteBlack";
-	string $matteWhite 		= "ssMatteWhite";
-	string $matteRed 		= "ssMatteRed";
-	string $matteGreen 		= "ssMatteGreen";
-	string $matteBlue 		= "ssMatteBlue";
+	string $matteBlack 		= "SS_Matte_Black";
+	string $matteWhite 		= "SS_Matte_White";
+	string $matteRed 		= "SS_Matte_Red";
+	string $matteGreen 		= "SS_Matte_Green";
+	string $matteBlue 		= "SS_Matte_Blue";
 	
 	string $matteBin		= "Mattes";
 	string $matteSolidBin   = "Mattes_Solid";
@@ -454,7 +454,7 @@ global proc spckCreateBrakeMaterials() {
 	string $metalCalliperSteel	= "VR_Metal_Brake_Calliper_Steel";
 
 	string $brakeBin			= "Car_Brakes";
-	string $metalBin			= "Car_Metalss";
+	string $metalBin			= "Car_Metals";
 	
 	string $materialList[] = { $metalDisc,
 							$metalCalliperSteel
@@ -774,26 +774,40 @@ global proc spckCreatePaintMaterials() {
 
 global proc spckCreateTechMaterials() {
 
-	string $aoMaterial 				= "VR_AO";
-	string $worldUvMaterial 		= "VR_World_UV";
-	string $upDownMaterial 			= "VR_Up_Down";
+	string $aoTex	 				= "VR_Dirt_AO";
+	string $samplerInfo 			= "VR_Tech_Sampler";
+	string $topDowntex 				= "VR_Top_Down";
 	
 	string $techBin					= "Technical";
 	
 
 	// Create AO
-	shadingNode -n $aoMaterial -asShader VRayMtl;
-	sets -renderable true -noSurfaceShader true -empty -name ($aoMaterial+"SG");
-	connectAttr -f ($aoMaterial+".outColor") ($aoMaterial+"SG.surfaceShader");
+	if (!objExists($aoTex)){
+		shadingNode -n $aoTex -asTexture VRayDirt;
 	
-	shadingNode -n ($aoMaterial+"_dirt") -asTexture VRayDirt;
-	shadingNode -n ($aoMaterial+"_dirt_place2dTexture") -asUtility place2dTexture;
-	connectAttr ($aoMaterial+"_dirt_place2dTexture.outUV") ($aoMaterial+"_dirt.uv");
-	connectAttr ($aoMaterial+"_dirt_place2dTexture.outUvFilterSize") ($aoMaterial+"_dirt.uvFilterSize");
-	connectAttr -f ($aoMaterial+"_dirt.outColor") ($aoMaterial+".color");
-
-	select -r $aoMaterial;
-	binMembership -add $techBin;	
+		select -r $aoTex;
+		binMembership -add $techBin;	
+	}
+	
+	// Create XYZ
+	if (!objExists($samplerInfo)){
+	
+		shadingNode -n $samplerInfo -asUtility samplerInfo;
+	
+		select -r $samplerInfo;
+		binMembership -add $techBin;	
+	}
+	
+	// Create TopDown
+	if (!objExists($topDowntex)){
+		catchQuiet ( vrayCreateNodeFromDll ($topDowntex, "texture", "TexFalloff", 2));
+		setAttr ($topDowntex+".color1") -type double3 1 0 0 ;
+		setAttr ($topDowntex+".color2") -type double3 1 0 0 ;
+		setAttr ($topDowntex+".direction_type") 2;
+		
+		select -r $topDowntex;
+		binMembership -add $techBin;	
+	}
 }
 
 

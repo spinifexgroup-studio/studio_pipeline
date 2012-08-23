@@ -90,6 +90,7 @@ global proc spckSetupScene() {
 	setAttr vraySettings.cmap_gamma 2.2;
 	setAttr vraySettings.sRGBOn 1;
 	setAttr vraySettings.cmap_affectBackground 1;
+	setAttr vraySettings.cmap_affectSwatches 1;
 
 	// Setup some materials that can be used for matte and tech functions
 
@@ -109,10 +110,45 @@ global proc spckSetupScene() {
 	
 	//Setup AO
 	
+	string $vrayREetexAO = "vrayRE_eTex_AO";
 	vrayAddRenderElement ExtraTexElement;
-	rename "vrayRE_Extra_Tex" "vrayRE_AO";
-	connectAttr -force "VR_AO.outColor" "vrayRE_AO.vray_texture_extratex";
-	setAttr "vrayRE_AO.vray_name_extratex" -type "string" "AO";
+	rename "vrayRE_Extra_Tex" $vrayREetexAO;
+	connectAttr -force "VR_Dirt_AO.outColor" ($vrayREetexAO+".vray_texture_extratex");
+	setAttr ($vrayREetexAO+".vray_name_extratex") -type "string" "AO";
+	setAttr ($vrayREetexAO+".vray_explicit_name_extratex") -type "string" "AO";
+
+
+	//Setup World XYZ
+	
+	string $vrayREetexXYZ = "vrayRE_eTex_World_XYZ";
+	vrayAddRenderElement ExtraTexElement;
+	rename "vrayRE_Extra_Tex" $vrayREetexXYZ;
+	connectAttr -force "VR_Tech_Sampler.pointWorld" ($vrayREetexXYZ+".vray_texture_extratex");
+	setAttr ($vrayREetexXYZ+".vray_name_extratex") -type "string" "world_XYZ";
+	setAttr ($vrayREetexXYZ+".vray_explicit_name_extratex") -type "string" "world_XYZ";
+	setAttr ($vrayREetexXYZ+".vray_considerforaa_extratex") 0;
+
+	//Setup World UV
+	
+	string $vrayREetexUV = "vrayRE_eTex_UV";
+	vrayAddRenderElement ExtraTexElement;
+	rename "vrayRE_Extra_Tex" $vrayREetexUV;
+	connectAttr -force "VR_Tech_Sampler.uCoord" ($vrayREetexUV+".vray_texture_extratexR");
+	connectAttr -force "VR_Tech_Sampler.vCoord" ($vrayREetexUV+".vray_texture_extratexG");
+	setAttr ($vrayREetexUV+".vray_name_extratex") -type "string" "UV";
+	setAttr ($vrayREetexUV+".vray_explicit_name_extratex") -type "string" "UV";
+	setAttr ($vrayREetexUV+".vray_considerforaa_extratex") 0;
+
+	//Setup TopDown
+	
+	string $vrayREetexTopDown = "vrayRE_eTex_TopDown";
+	vrayAddRenderElement ExtraTexElement;
+	rename "vrayRE_Extra_Tex" $vrayREetexTopDown;
+	connectAttr -force "VR_Top_Down.outColor" ($vrayREetexTopDown+".vray_texture_extratex");
+	setAttr ($vrayREetexTopDown+".vray_name_extratex") -type "string" "TopDown";
+	setAttr ($vrayREetexTopDown+".vray_explicit_name_extratex") -type "string" "Topdown";
+	setAttr ($vrayREetexTopDown+".vray_considerforaa_extratex") 0;
+
 
 
 	//Setup Depth
@@ -122,6 +158,7 @@ global proc spckSetupScene() {
 
 	setAttr "vrayRE_Z_depthAA.vray_depthFromCamera_zdepth" 1;
 	setAttr "vrayRE_Z_depthAA.vray_depthClamp" 0;
+	setAttr -type "string" "vrayRE_Z_depthAA.vray_name_zdepth" "zDepthAA";
 	setAttr "vrayRE_Z_depth.vray_depthFromCamera_zdepth" 1;
 	setAttr "vrayRE_Z_depth.vray_depthClamp" 0;
 	setAttr "vrayRE_Z_depth.vray_filtering_zdepth" 0;
@@ -137,7 +174,9 @@ global proc spckSetupScene() {
 	setAttr "vrayRE_Specular.enabled" 			0;
 	setAttr "vrayRE_Z_depth.enabled" 			0;
 	setAttr "vrayRE_Z_depthAA.enabled" 			0;
-	setAttr "vrayRE_AO.enabled" 				0;
+	setAttr ($vrayREetexAO+".enabled")			0;
+	setAttr ($vrayREetexXYZ+".enabled")			0;
+	setAttr ($vrayREetexUV+".enabled")			0;
 	
 	// Create default layers for car work
 

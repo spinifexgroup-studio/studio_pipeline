@@ -528,7 +528,7 @@ global proc spckRigCar_CreateWheelDummies ( string $car )
 	setAttr ($rotationDummy+".overrideEnabled") 1;
 	setAttr ($rotationDummy+".overrideColor") 17;
 
-	float $wheelPosition[3] = `xform -query -rotatePivot ($car + $WheelRear_L)`;
+	float $wheelPosition[3] = `xform -query -t ($car + $WheelRear_L)`;
 	move -a -os 0 ($wheelPosition[1]*5) $wheelPosition[2] $rotationDummy;
 	
 	setAttr -lock true -keyable false -channelBox false ($rotationDummy+".tx");
@@ -589,19 +589,19 @@ global proc spckRigCar_CreateWheelDummies ( string $car )
 	$select = `ls -sl`;
 	$sizeBounds = getAnimatedSizeForMeshes( $select );
 
-	$wheelPosition = `xform -query -rotatePivot ($car + $WheelFront_L)`;
+	$wheelPosition = `xform -query -t ($car + $WheelFront_L)`;
 	move -a -os ($wheelPosition[0]+$sizeBounds[0]) $wheelPosition[1] $wheelPosition[2] $wheelDummyFL;
 	move -a -os ($wheelPosition[0]+$sizeBounds[0]+10) $wheelPosition[1] $wheelPosition[2] $wheelRotOverrideFL;
 
-	$wheelPosition = `xform -query -rotatePivot ($car + $WheelFront_R)`;
+	$wheelPosition = `xform -query -t ($car + $WheelFront_R)`;
 	move -a -os ($wheelPosition[0]-$sizeBounds[0]) $wheelPosition[1] $wheelPosition[2] $wheelDummyFR;
 	move -a -os ($wheelPosition[0]-$sizeBounds[0]-10) $wheelPosition[1] $wheelPosition[2] $wheelRotOverrideFR;
 
-	$wheelPosition = `xform -query -rotatePivot ($car + $WheelRear_L)`;
+	$wheelPosition = `xform -query -t ($car + $WheelRear_L)`;
 	move -a -os ($wheelPosition[0]+$sizeBounds[0]) $wheelPosition[1] $wheelPosition[2] $wheelDummyRL;
 	move -a -os ($wheelPosition[0]+$sizeBounds[0]+10) $wheelPosition[1] $wheelPosition[2] $wheelRotOverrideRL;
 
-	$wheelPosition = `xform -query -rotatePivot ($car + $WheelRear_R)`;
+	$wheelPosition = `xform -query -t ($car + $WheelRear_R)`;
 	move -a -os ($wheelPosition[0]-$sizeBounds[0]) $wheelPosition[1] $wheelPosition[2] $wheelDummyRR;
 	move -a -os ($wheelPosition[0]-$sizeBounds[0]-10) $wheelPosition[1] $wheelPosition[2] $wheelRotOverrideRR;
 
@@ -659,9 +659,9 @@ global proc spckRigCar_CreateSteering (string $car )
 	setAttr ($steeringOverride+".overrideEnabled") 1;
 	setAttr ($steeringOverride+".overrideColor") 17;
 
-	float $steeringPosition[3] = `xform -query -rotatePivot ($car + $WheelFront_L)`;
-	move -a -os 0 ($steeringPosition[1]*4) $steeringPosition[2] $steeringOverride;
-	move -a -os 0 0 $steeringPosition[2] $steeringDummy;
+	float $steeringPosition[3] = `xform -query -t ($car + $WheelFront_L)`;
+	move -a -ws 0 ($steeringPosition[1]*4) $steeringPosition[2] $steeringOverride;
+	move -a -ws 0 0 $steeringPosition[2] $steeringDummy;
 	transformLimits -ry -30 30 -ery 1 1 $steeringDummy;
 	transformLimits -ry -30 30 -ery 1 1 $steeringOverride;
 	
@@ -784,13 +784,27 @@ global proc spckRigCar_CreateAndAttachBodyDummies (string $car )
 	$pivotX = ($bounds[0]+$bounds[3])/2;
 	$pivotY = $wheelBounds[4];
 	$pivotZ = ($bounds[2]+$bounds[5])/2;
+	
+	/*
 	move -a -ws 0 $pivotY 0 ($car + $Body+".scalePivot") ($car + $Body+".rotatePivot") ;
 	move -a -ws 0 $pivotY 0 ($car + $Wheels+".scalePivot") ($car + $Wheels+".rotatePivot") ;
 	move -a -ws 0 0 0 ($car+".scalePivot") ($car+".rotatePivot") ;
+	*/
+
+	// Move car to centre - then move back - this moves translate pivot to something useable by other 3d programs.
+	
+	move -a -ws 0 (-$pivotY) 0 ($car + $Body);
+	refresh;
+	
+	select -r ($car + $Body);
+	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;				// Freeze transform on the body
+	
+	move -a -ws 0 $pivotY 0 ($car + $Body);
+	refresh;
 	
 	curve -n $bodyRotDummy -d 3 -p 0 0 -150 -p 0 0 -150 -p 0 60 -150 -p 0 60 -150 -p 0 60 -150 -p 0 0 150 -p 0 0 150 -k 0 -k 0 -k 0 -k 1 -k 1 -k 1 -k 2 -k 2 -k 2 ;
 	parent $bodyRotDummy $car;
-	float $bodyPosition[3] = `xform -query -rotatePivot ($car + $Body)`;
+	float $bodyPosition[3] = `xform -query -t ($car + $Body)`;
 	move -a -os 0 ($bodyPosition[1]*2) $bodyPosition[2] $bodyRotDummy;
 	
 	setAttr ($bodyRotDummy+".overrideEnabled") 1;
