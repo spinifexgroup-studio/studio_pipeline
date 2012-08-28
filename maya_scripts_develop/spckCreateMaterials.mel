@@ -587,25 +587,73 @@ global proc spckCreateBrakeMaterials() {
 
 //
 //
+// Add standard glass
+//
+//
+
+
+global proc spckCreateClearGlassMaterials() {
+
+	string $glassSolid		= "VR_Glass_Clear_Solid";
+	string $glassThin		= "VR_Glass_Clear_Thin";
+
+	string $glassBin		= "Car_Glass";
+	
+	string $materialList[] = { $glassSolid,
+							$glassThin
+							};
+							
+	// Check if window shader exists - if not create it - add to window bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			shadingNode -n $material -asShader VRayMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+		}
+		select -r $material;
+		binMembership -add $glassBin;
+		
+		//Setup common settings
+		setAttr ($material+".color") -type double3 0 0 0;
+		setAttr ($material+".brdfType") 1;
+		setAttr ($material+".reflectionColor") -type double3 1 1 1;
+		setAttr ($material+".reflectionColorAmount") 0.9;
+		setAttr ($material+".useFresnel") 1;
+	}
+	
+	//Setup Thick Glass
+	setAttr ($glassSolid+".lockFresnelIORToRefractionIOR") 1;
+	setAttr ($glassSolid+".fresnelIOR") 1.584;
+	setAttr ($glassSolid+".refractionIOR") 1.584;
+
+	//Setup Thin Glass
+	setAttr ($glassThin+".lockFresnelIORToRefractionIOR") 0;
+	setAttr ($glassThin+".fresnelIOR") 2.0;
+	setAttr ($glassThin+".refractionIOR") 1.005;
+
+}
+
+
+//
+//
 // Add window materials
 //
 //
 
 global proc spckCreateWindowMaterials() {
 
-	string $glassTintBlackOpaque		= "vrGlassTintedOpaque";
-	string $glassTintBlackDarkThick		= "vrGlassTintedDarkThick";
-	string $glassTintBlackDarkThin		= "vrGlassTintedDarkThin";
-	string $glassTintBlackLightThick	= "vrGlassTintedLightThick";
-	string $glassTintBlackLightThin		= "vrGlassTintedLightThin";
+	spckCreateClearGlassMaterials();
 
-	string $windowBin					= "Car_Window_Glass";
-	
-	string $materialList[] = { $glassTintBlackOpaque,
-							$glassTintBlackDarkThick,
-							$glassTintBlackDarkThin,
-							$glassTintBlackLightThick,
-							$glassTintBlackLightThin
+	string $glassSmokeSolid		= "VR_Glass_Smoke_Solid";
+	string $glassSmokeThin		= "VR_Glass_Smoke_Thin";
+	string $glassSmokeOpaque	= "VR_Glass_Smoke_Opaque";
+
+	string $windowBin			= "Car_Window_Glass";
+	string $glassBin			= "Car_Glass";
+
+	string $materialList[] = { $glassSmokeSolid,
+							$glassSmokeThin,
+							$glassSmokeOpaque
 							};
 							
 	// Check if window shader exists - if not create it - add to window bin
@@ -617,19 +665,21 @@ global proc spckCreateWindowMaterials() {
 		}
 		select -r $material;
 		binMembership -add $windowBin;
+		binMembership -add $glassBin;
 		
 		//Setup common settings
-		setAttr ($material+".color") -type double3 0.16 0.16 0.16 ;
-		setAttr ($material+".brdfType") 2;
+		setAttr ($material+".color") -type double3 0 0 0;
+		setAttr ($material+".brdfType") 1;
+		setAttr ($material+".reflectionColor") -type double3 1 1 1;
+		setAttr ($material+".reflectionColorAmount") 0.9;
 		setAttr ($material+".useFresnel") 1;
-		setAttr ($material+".reflectionColor") -type double3 0.9 0.9 0.9 ;
 	}
 }
 
 
 //
 //
-// Add window materials
+// Add Paint materials
 //
 //
 
@@ -797,7 +847,7 @@ global proc spckCreateTechMaterials() {
 		select -r $samplerInfo;
 		binMembership -add $techBin;	
 	}
-	
+	/*
 	// Create TopDown
 	if (!objExists($topDowntex)){
 		catchQuiet ( vrayCreateNodeFromDll ($topDowntex, "texture", "TexFalloff", 2));
@@ -808,6 +858,7 @@ global proc spckCreateTechMaterials() {
 		select -r $topDowntex;
 		binMembership -add $techBin;	
 	}
+	*/
 }
 
 

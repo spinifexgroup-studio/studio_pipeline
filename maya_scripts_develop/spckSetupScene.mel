@@ -18,6 +18,8 @@ global proc spckSetupScene() {
 	string $renderLayerMatteObstruction 		= "matteObstruction";
 	string $renderLayerMatteLightDetails 		= "matteLightDetails";
 	
+	
+	/* TODO: better version of this code
 	// Check if we haven't done this before
 	
 	string $select[] 			= `ls`;
@@ -32,6 +34,7 @@ global proc spckSetupScene() {
 			}
 		}
 	}
+	*/
 
 	
 	// Check that everything is setup correctly before continuing.
@@ -139,6 +142,7 @@ global proc spckSetupScene() {
 	setAttr ($vrayREetexUV+".vray_explicit_name_extratex") -type "string" "UV";
 	setAttr ($vrayREetexUV+".vray_considerforaa_extratex") 0;
 
+	/* fix when working
 	//Setup TopDown
 	
 	string $vrayREetexTopDown = "vrayRE_eTex_TopDown";
@@ -147,7 +151,7 @@ global proc spckSetupScene() {
 	connectAttr -force "VR_Top_Down.outColor" ($vrayREetexTopDown+".vray_texture_extratex");
 	setAttr ($vrayREetexTopDown+".vray_name_extratex") -type "string" "TopDown";
 	setAttr ($vrayREetexTopDown+".vray_explicit_name_extratex") -type "string" "Topdown";
-	setAttr ($vrayREetexTopDown+".vray_considerforaa_extratex") 0;
+	*/
 
 
 
