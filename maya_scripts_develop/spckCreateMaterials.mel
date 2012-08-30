@@ -618,6 +618,7 @@ global proc spckCreateClearGlassMaterials() {
 		setAttr ($material+".brdfType") 1;
 		setAttr ($material+".reflectionColor") -type double3 1 1 1;
 		setAttr ($material+".reflectionColorAmount") 0.9;
+		setAttr ($material+".refractionColor") -type double3 1 1 1;
 		setAttr ($material+".useFresnel") 1;
 	}
 	
@@ -662,7 +663,19 @@ global proc spckCreateWindowMaterials() {
 			shadingNode -n $material -asShader VRayMtl;
 			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
 			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+			
+			//Fog Ramp
+			
+			shadingNode -n ($material+"_fogRamp") -asTexture ramp;
+			spinCreateLinearGammaUtility ( ($material+"_fogRamp_gamma") );
+			
+			removeMultiInstance -break true ($material+"_fogRamp.colorEntryList[1]");
+			removeMultiInstance -break true ($material+"_fogRamp.colorEntryList[2]");
+			
+			connectAttr -f ($material+"_fogRamp.outColor") ($material+"_fogRamp_gamma.value");
+			connectAttr -f ($material+"_fogRamp_gamma.outValue") ($material+".fogColor");
 		}
+		
 		select -r $material;
 		binMembership -add $windowBin;
 		binMembership -add $glassBin;
@@ -672,8 +685,33 @@ global proc spckCreateWindowMaterials() {
 		setAttr ($material+".brdfType") 1;
 		setAttr ($material+".reflectionColor") -type double3 1 1 1;
 		setAttr ($material+".reflectionColorAmount") 0.9;
+		setAttr ($material+".refractionColor") -type double3 1 1 1;
 		setAttr ($material+".useFresnel") 1;
+		setAttr ($material+"_fogRamp.colorEntryList[0].color") -type double3 0.93 0.95 0.94;
+		setAttr ($material+".fogBias") 1;
+		setAttr ($material+".doubleSided") 0;
 	}
+	
+	
+	//Setup Thick Glass
+	setAttr ($glassSmokeSolid+".lockFresnelIORToRefractionIOR") 1;
+	setAttr ($glassSmokeSolid+".fresnelIOR") 1.584;
+	setAttr ($glassSmokeSolid+".refractionIOR") 1.584;
+	setAttr ($glassSmokeSolid+".fogMult") 0.1;
+
+	//Setup Thin Glass
+	setAttr ($glassSmokeThin+".lockFresnelIORToRefractionIOR") 0;
+	setAttr ($glassSmokeThin+".fresnelIOR") 2.0;
+	setAttr ($glassSmokeThin+".refractionIOR") 1.005;
+	setAttr ($glassSmokeThin+".fogMult") 1.0;
+
+	//Setup Opaque Glass
+	setAttr ($glassSmokeOpaque+".lockFresnelIORToRefractionIOR") 0;
+	setAttr ($glassSmokeOpaque+".fresnelIOR") 2.0;
+	setAttr ($glassSmokeOpaque+".refractionIOR") 1.005;
+	setAttr ($glassSmokeOpaque+"_fogRamp.colorEntryList[0].color") -type double3 0.19 0.195 0.192;
+	setAttr ($glassSmokeOpaque+".fogMult") 0.1;
+
 }
 
 
@@ -801,7 +839,7 @@ global proc spckCreatePaintMaterials() {
 			
 			//Setup Clamp
 			
-			setAttr ($material+"_baseSurfaceLumaClamp.maxR") 1.0;
+			setAttr ($material+"_baseSurfaceLumaClamp.maxR") 1.0;	
 			setAttr ($material+"_baseSurfaceLumaClamp.maxG") 1.0;
 			setAttr ($material+"_baseSurfaceLumaClamp.maxB") 1.0;
 			
