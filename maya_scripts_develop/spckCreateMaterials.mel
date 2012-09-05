@@ -24,7 +24,8 @@ global proc spckCreateMaterials() {
 	spckCreateWindowMaterials();
 	spckCreatePaintMaterials();
 	spckCreateTechMaterials();
-
+	
+	print "spckCreateMaterials Complete.\n";
 }
 
 
@@ -32,7 +33,7 @@ global proc spckCreateMaterials() {
 //
 // Add essential mattes materials
 //
-//
+// - created to roy specs
 
 global proc spckCreateMatteMaterials() {
 
@@ -107,6 +108,8 @@ global proc spckCreateMatteMaterials() {
 	select -r $matteBlue;
 	binMembership -add $matteBin;
 	binMembership -add $matteSolidBin;
+	
+	print "spckCreateMatteMaterials Complete.\n";
 }
 
 
@@ -114,15 +117,15 @@ global proc spckCreateMatteMaterials() {
 //
 // Add essential plastic materials
 //
-//
+// - created to roy's specs
 
 global proc spckCreatePlasticMaterials() {
 
 	string $plasticBlackMatte 		= "VR_Plastic_Black_Matte";
-	string $plasticBlackGloss 		= "vr_Plastic_Black_Gloss";
-	string $plasticBlackSemiGloss	= "vr_Plastic_Black_SemiGloss";
-	string $plasticBlackLowSheen 	= "vr_Plastic_Black_LowSheen";
-	string $plasticBlackSatin 		= "vr_Plastic_Black_Satin";
+	string $plasticBlackGloss 		= "VR_Plastic_Black_Gloss";
+	string $plasticBlackSemiGloss	= "VR_Plastic_Black_SemiGloss";
+	string $plasticBlackLowSheen 	= "VR_Plastic_Black_LowSheen";
+	string $plasticBlackSatin 		= "VR_Plastic_Black_Satin";
 	
 	string $plasticsBin				= "Car_Plastics";
 	string $partsBin				= "Car_Parts";
@@ -168,71 +171,156 @@ global proc spckCreatePlasticMaterials() {
 	setAttr ($plasticBlackLowSheen+".roughnessAmount") 0.6;
 	setAttr ($plasticBlackSatin+".roughnessAmount") 0.4;
 
-	
+	print "spckCreatePlasticMaterials Complete.\n";
+
 }
 
 //
 //
 // Add head and tailight materials
 //
-//
+// - made to Roy's specifications
 
 global proc spckCreateLightMaterials() {
 
-	string $plasticClearThin		= "vrPlasticClearThin";
-	string $plasticClearThick		= "vrPlasticClearThick";
-	string $plasticClearRedThin		= "vrPlasticClearRedThin";
-	string $plasticClearRedThick	= "vrPlasticClearRedThick";
-	string $plasticClearOrangeThin	= "vrPlasticClearOrangeThin";
-	string $plasticClearOrangeThick	= "vrPlasticClearOrangeThick";
-	string $bulbClearThin			= "vrBulbClearThin";
-	string $bulbClearThick			= "vrBulbClearThick";
+	spckCreateClearGlassMaterials();
 
-	string $lightsBin		= "Car_Lights";
+	string $plasticClearThin		= "VR_Plastic_Clear_Thin";
+	string $plasticClearThick		= "VR_Plastic_Clear_Thick";
+	string $plasticClearFrostThick	= "VR_Plastic_Clear_Frost_Thick";
+	string $plasticClearFrostThin	= "VR_Plastic_Clear_Frost_Thin";
+	string $plasticRedThin			= "VR_Plastic_Red_Thin";
+	string $plasticRedThick			= "VR_Plastic_Red_Thick";
+	string $plasticOrangeThin		= "VR_Plastic_Orange_Thin";
+	string $plasticOrangeThick		= "VR_Plastic_Orange_Thick";
+
+	string $lightsBin				= "Car_Lights";
 	
 	string $materialList[] = { $plasticClearThin,
 							$plasticClearThick,
-							$plasticClearRedThin,
-							$plasticClearRedThick,
-							$plasticClearOrangeThin,
-							$plasticClearOrangeThick,
-							$bulbClearThin,
-							$bulbClearThick
+							$plasticClearFrostThick,
+							$plasticClearFrostThin,
+							$plasticRedThin,
+							$plasticRedThick,
+							$plasticOrangeThin,
+							$plasticOrangeThick
 							};
 						
-	// Check if brake shader exists - if not create it - add to window bin
+	// Check if shader exists - if not create it - add to bin
 	for ($material in $materialList) {
 		if (!objExists($material)){
-			shadingNode -n $material -asShader VRayMtl;
+			shadingNode -n $material -asShader VRayMtlWrapper;
 			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
 			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+			
+			shadingNode -n ($material+"_base") -asShader VRayMtl;
+			connectAttr -f ($material+"_base.outColor") ($material+".baseMaterial");
 		}
+		
+		//Setup common settings
+		setAttr ($material+".generateGI") 0;
+		setAttr ($material+"_base.swatchAutoUpdate") 0;
+		setAttr ($material+"_base.brdfType") 1;
+		setAttr ($material+"_base.reflectionColor") -type double3 1 1 1;
+		setAttr ($material+"_base.reflectionColorAmount") 0.9;
+		setAttr ($material+"_base.refractionColor") -type double3 1 1 1;
+		setAttr ($material+"_base.refractionColorAmount") 1;
+		setAttr ($material+"_base.useFresnel") 1;
+		setAttr ($material+"_base.fresnelIOR") 1.584;
+		setAttr ($material+"_base.refractionsMaxDepth") 15;
+		setAttr ($material+"_base.reflectionsMaxDepth") 15;
+		
+		//Fog Ramp
+		
+		shadingNode -n ($material+"_base_fogRamp") -asTexture ramp;
+		spinCreateLinearGammaUtility ( ($material+"_base_fogRamp_gamma") );
+		
+		removeMultiInstance -break true ($material+"_base_fogRamp.colorEntryList[1]");
+		removeMultiInstance -break true ($material+"_base_fogRamp.colorEntryList[2]");
+		
+		connectAttr -f ($material+"_base_fogRamp.outColor") ($material+"_base_fogRamp_gamma.value");
+		connectAttr -f ($material+"_base_fogRamp_gamma.outValue") ($material+"_base.fogColor");
+
+
 		select -r $material;
 		binMembership -add $lightsBin;
+		
+		select -r ($material+"_base");
+		binMembership -rm $lightsBin;
+
 	}
 	
 	// Setup Colour and refraction
 	
-	// Clear
-	setAttr ($plasticClearThin+".refractionColor") -type double3 1 1 1 ;
-	setAttr ($plasticClearThick+".refractionColor") -type double3 1 1 1 ;
+	// Clear Thin
+	setAttr ($plasticClearThin+"_base.lockFresnelIORToRefractionIOR") 0;
+	setAttr ($plasticClearThin+"_base.fresnelIOR") 1.584;
+	setAttr ($plasticClearThin+"_base.refractionIOR") 1.005;
+	setAttr ($plasticClearThin+"_base_fogRamp.colorEntryList[0].color") -type double3 1 1 1;
 
-	// Red
-	setAttr ($plasticClearRedThin+".color") -type double3 1 0 0 ;
-	setAttr ($plasticClearRedThick+".color") -type double3 1 0 0 ;
-	setAttr ($plasticClearRedThin+".refractionColor") -type double3 1 0 0 ;
-	setAttr ($plasticClearRedThick+".refractionColor") -type double3 1 0 0 ;
 
-	// Orange
-	setAttr ($plasticClearOrangeThin+".color") -type double3 1 0.35 0 ;
-	setAttr ($plasticClearOrangeThick+".color") -type double3 1 0.35 0 ;
-	setAttr ($plasticClearOrangeThin+".refractionColor") -type double3 1 0.35 0 ;
-	setAttr ($plasticClearOrangeThick+".refractionColor") -type double3 1 0.35 0 ;
+	// Clear Thick
+	setAttr ($plasticClearThick+"_base.lockFresnelIORToRefractionIOR") 1;
+	setAttr ($plasticClearThick+"_base.fresnelIOR") 1.584;
+	setAttr ($plasticClearThick+"_base.refractionIOR") 1.584;
+	setAttr ($plasticClearThick+"_base_fogRamp.colorEntryList[0].color") -type double3 1 1 1;
+
+	// Clear Frost Thin
+	setAttr ($plasticClearFrostThin+"_base.lockFresnelIORToRefractionIOR") 0;
+	setAttr ($plasticClearFrostThin+"_base.fresnelIOR") 1.584;
+	setAttr ($plasticClearFrostThin+"_base.refractionIOR") 1.005;
+	setAttr ($plasticClearFrostThin+"_base_fogRamp.colorEntryList[0].color") -type double3 1 1 1;
+	setAttr ($plasticClearFrostThin+"_base.refractionGlossiness") 0.9;
+
+
+	// Clear Frost Thick
+	setAttr ($plasticClearFrostThick+"_base.lockFresnelIORToRefractionIOR") 1;
+	setAttr ($plasticClearFrostThick+"_base.fresnelIOR") 1.584;
+	setAttr ($plasticClearFrostThick+"_base.refractionIOR") 1.584;
+	setAttr ($plasticClearFrostThick+"_base_fogRamp.colorEntryList[0].color") -type double3 1 1 1;
+	setAttr ($plasticClearFrostThick+"_base.refractionGlossiness") 0.9;
+
+	// Red Thin
+	setAttr ($plasticRedThin+"_base.reflectionColorAmount") 0.45;
+	setAttr ($plasticRedThin+"_base.reflectionGlossiness") 0.7;
 	
-	// Light Bulb
-	setAttr ($bulbClearThin+".refractionColor") -type double3 1 1 1 ;
-	setAttr ($bulbClearThick+".refractionColor") -type double3 1 1 1 ;
+	setAttr ($plasticRedThin+"_base.lockFresnelIORToRefractionIOR") 0;
+	setAttr ($plasticRedThin+"_base.fresnelIOR") 1.584;
+	setAttr ($plasticRedThin+"_base.refractionIOR") 1.005;
+	setAttr ($plasticRedThin+"_base_fogRamp.colorEntryList[0].color") -type double3 0.9 0 0;
+	setAttr ($plasticRedThin+"_base.fogMult") 1.5;
+	setAttr ($plasticRedThin+"_base.fogBias") 0;
 
+	// Red Thick
+	setAttr ($plasticRedThick+"_base.reflectionColorAmount") 0.45;
+	setAttr ($plasticRedThick+"_base.reflectionGlossiness") 0.7;
+
+	setAttr ($plasticRedThick+"_base.lockFresnelIORToRefractionIOR") 1;
+	setAttr ($plasticRedThick+"_base.fresnelIOR") 1.584;
+	setAttr ($plasticRedThick+"_base.refractionIOR") 1.584;
+	setAttr ($plasticRedThick+"_base_fogRamp.colorEntryList[0].color") -type double3 0.9 0 0;
+	setAttr ($plasticRedThick+"_base.fogMult") 1.5;
+	setAttr ($plasticRedThick+"_base.fogBias") 0;
+
+	// Orange Thin
+	setAttr ($plasticOrangeThin+"_base.lockFresnelIORToRefractionIOR") 0;
+	setAttr ($plasticOrangeThin+"_base.fresnelIOR") 1.584;
+	setAttr ($plasticOrangeThin+"_base.refractionIOR") 1.005;
+	setAttr ($plasticOrangeThin+"_base_fogRamp.colorEntryList[0].color") -type double3 0.85 0.43 0.043;
+	setAttr ($plasticOrangeThin+"_base.fogMult") 2.5;
+	setAttr ($plasticOrangeThin+"_base.fogBias") 3.0;
+	
+
+	// Orange Thick
+	setAttr ($plasticOrangeThick+"_base.lockFresnelIORToRefractionIOR") 1;
+	setAttr ($plasticOrangeThick+"_base.fresnelIOR") 1.584;
+	setAttr ($plasticOrangeThick+"_base.refractionIOR") 1.584;
+	setAttr ($plasticOrangeThick+"_base_fogRamp.colorEntryList[0].color") -type double3 0.85 0.43 0.043;
+	setAttr ($plasticOrangeThick+"_base.fogMult") 2.5;
+	setAttr ($plasticOrangeThick+"_base.fogBias") 2.0;
+
+
+	print "spckCreateLightMaterials Complete.\n";
 }
 
 
@@ -240,15 +328,15 @@ global proc spckCreateLightMaterials() {
 //
 // Add metal materials
 //
-//
+// - Partially made to Roy's specs - needs anisotropy
 
 global proc spckCreateMetalMaterials() {
 
-	string $metalUnderCarriage	= "vrMetalUnderCarriage";
-	string $metalBlackGloss		= "vrMetalBlackGloss";
-	string $metalBlackMatte		= "vrMetalBlackMatte";
-	string $metalSteelGloss		= "vrMetalSteelGloss";
-	string $metalSteelMatte		= "vrMetalSteelMatte";
+	string $metalUnderCarriage	= "VR_Metal_UnderCarriage";
+	string $metalBlackGloss		= "VR_Metal_Black_Gloss";
+	string $metalBlackMatte		= "VR_Metal_Black_Matte";
+	string $metalSteelGloss		= "VR_Metal_Steel_Gloss";
+	string $metalSteelMatte		= "VR_Metal_Steel_Matte";
 	
 	string $metalBin		= "Car_Metals";
 	string $partsBin		= "Car_Parts";
@@ -274,28 +362,46 @@ global proc spckCreateMetalMaterials() {
 		if ($material != $metalUnderCarriage){
 			binMembership -add $partsBin;
 		}
+		
+		//Colour Ramp
+		
+		shadingNode -n ($material+"_colourRamp") -asTexture ramp;
+		spinCreateLinearGammaUtility ( ($material+"_colourRamp_gamma") );
+		
+		removeMultiInstance -break true ($material+"_colourRamp.colorEntryList[1]");
+		removeMultiInstance -break true ($material+"_colourRamp.colorEntryList[2]");
+		
+		connectAttr -f ($material+"_colourRamp.outColor") ($material+"_colourRamp_gamma.value");
+		connectAttr -f ($material+"_colourRamp_gamma.outValue") ($material+".color");
 	}
+	
+	// Setup Undercarriage
+	
+	setAttr ($metalUnderCarriage+"_colourRamp.colorEntryList[0].color") -type double3 0.125 0.125 0.125 ;
+	setAttr ($metalUnderCarriage+".roughnessAmount") 0.5 ;
 	
 	// Setup Black
 	
-	setAttr ($metalBlackGloss+".color") -type double3 0.1 0.1 0.1 ;
-	setAttr ($metalBlackMatte+".color") -type double3 0.1 0.1 0.1 ;
+	setAttr ($metalBlackGloss+"_colourRamp.colorEntryList[0].color") -type double3 0.1 0.1 0.1 ;
+	setAttr ($metalBlackMatte+"_colourRamp.colorEntryList[0].color") -type double3 0.1 0.1 0.1 ;
 
 	// Setup Steel
 	
-	setAttr ($metalSteelGloss+".color") -type double3 0.5 0.5 0.5 ;
-	setAttr ($metalSteelMatte+".color") -type double3 0.5 0.5 0.5 ;
+	setAttr ($metalSteelGloss+"_colourRamp.colorEntryList[0].color") -type double3 0.5 0.5 0.5 ;
+	setAttr ($metalSteelMatte+"_colourRamp.colorEntryList[0].color") -type double3 0.5 0.5 0.5 ;
 	
 	// Setup Glossies
 	
 	// Setup Mattes
+	
+	print "spckCreateMetalMaterials Complete.\n";
 }
 
 //
 //
 // Add chrome materials
 //
-//
+// - created to roy specs
 
 global proc spckCreateChromeMaterials() {
 
@@ -353,13 +459,15 @@ global proc spckCreateChromeMaterials() {
 	setAttr ($chromeLights+".hilightGlossinessLock") 0;
 	setAttr ($chromeLights+".hilightGlossiness") 0.5;
 	setAttr ($chromeLights+".reflectionGlossiness") 1;
+	
+	print "spckCreateChromeMaterials Complete.\n";
 }
 
 //
 //
 // Add Wheel materials
 //
-//
+// - partially created
 
 global proc spckCreateWheelMaterials() {
 
@@ -439,14 +547,14 @@ global proc spckCreateWheelMaterials() {
 		setAttr ($material+".brdfType") 0;
 		setAttr ($material+".useFresnel") 1;
 	}
-
+	print "spckCreateWheelMaterials Complete.\n";
 }
 
 //
 //
 // Add brake materials
 //
-//
+// - created to roy specs
 
 global proc spckCreateBrakeMaterials() {
 
@@ -567,7 +675,7 @@ global proc spckCreateBrakeMaterials() {
 		}	
 		
 		setAttr ($metalDisc+"_bumpRamp.colorEntryList["+$i+"].position") $rampPosition;
-		print $rampPosition;
+		//print $rampPosition;
 	}
 	
 	//Set Last Attributes
@@ -583,13 +691,16 @@ global proc spckCreateBrakeMaterials() {
 	setAttr ($metalDisc+".refractionIOR") 8;
 	setAttr ($metalDisc+".bumpMult") 0.05;
 	setAttr ($metalDisc+".useFresnel") 1;
+	
+	print "spckCreateBrakeMaterials Complete.\n";
+
 }
 
 //
 //
 // Add standard glass
 //
-//
+// - created to roy specs
 
 
 global proc spckCreateClearGlassMaterials() {
@@ -598,6 +709,7 @@ global proc spckCreateClearGlassMaterials() {
 	string $glassThin		= "VR_Glass_Clear_Thin";
 
 	string $glassBin		= "Car_Glass";
+	string $bulbBin			= "Car_Lights";
 	
 	string $materialList[] = { $glassSolid,
 							$glassThin
@@ -612,6 +724,7 @@ global proc spckCreateClearGlassMaterials() {
 		}
 		select -r $material;
 		binMembership -add $glassBin;
+		binMembership -add $bulbBin;
 		
 		//Setup common settings
 		setAttr ($material+".color") -type double3 0 0 0;
@@ -629,8 +742,10 @@ global proc spckCreateClearGlassMaterials() {
 
 	//Setup Thin Glass
 	setAttr ($glassThin+".lockFresnelIORToRefractionIOR") 0;
-	setAttr ($glassThin+".fresnelIOR") 2.0;
+	setAttr ($glassThin+".fresnelIOR") 1.584;
 	setAttr ($glassThin+".refractionIOR") 1.005;
+
+	print "spckCreateClearGlassMaterials Complete.\n";
 
 }
 
@@ -639,7 +754,7 @@ global proc spckCreateClearGlassMaterials() {
 //
 // Add window materials
 //
-//
+// - created to roy specs
 
 global proc spckCreateWindowMaterials() {
 
@@ -694,23 +809,25 @@ global proc spckCreateWindowMaterials() {
 	
 	
 	//Setup Thick Glass
-	setAttr ($glassSmokeSolid+".lockFresnelIORToRefractionIOR") 1;
+	setAttr ($glassSmokeSolid+".lockFresnelIORToRefractionIOR") 0;
 	setAttr ($glassSmokeSolid+".fresnelIOR") 1.584;
 	setAttr ($glassSmokeSolid+".refractionIOR") 1.584;
-	setAttr ($glassSmokeSolid+".fogMult") 0.1;
+	setAttr ($glassSmokeSolid+".fogMult") 1.0;
 
 	//Setup Thin Glass
 	setAttr ($glassSmokeThin+".lockFresnelIORToRefractionIOR") 0;
-	setAttr ($glassSmokeThin+".fresnelIOR") 2.0;
+	setAttr ($glassSmokeThin+".fresnelIOR") 1.584;
 	setAttr ($glassSmokeThin+".refractionIOR") 1.005;
 	setAttr ($glassSmokeThin+".fogMult") 1.0;
 
 	//Setup Opaque Glass
 	setAttr ($glassSmokeOpaque+".lockFresnelIORToRefractionIOR") 0;
-	setAttr ($glassSmokeOpaque+".fresnelIOR") 2.0;
+	setAttr ($glassSmokeOpaque+".fresnelIOR") 1.584;
 	setAttr ($glassSmokeOpaque+".refractionIOR") 1.005;
 	setAttr ($glassSmokeOpaque+"_fogRamp.colorEntryList[0].color") -type double3 0.19 0.195 0.192;
-	setAttr ($glassSmokeOpaque+".fogMult") 0.1;
+	setAttr ($glassSmokeOpaque+".fogMult") 0.2;
+
+	print "spckCreateWindowMaterials Complete.\n";
 
 }
 
@@ -719,7 +836,7 @@ global proc spckCreateWindowMaterials() {
 //
 // Add Paint materials
 //
-//
+// - needs updating
 
 global proc spckCreatePaintMaterials() {
 
@@ -846,19 +963,32 @@ global proc spckCreatePaintMaterials() {
 			// Remove flakes
 			setAttr ($material+"_base.flake_density") 0;
 			setAttr ($material+"_coat.flake_density") 0;
+			
+			// Dont update base and coat swatches
+			
+			setAttr ($material+"_base.swatchAutoUpdate") 0;
+			setAttr ($material+"_coat.swatchAutoUpdate") 0;
 
 		}
 				
 		select -r $material;
 		binMembership -add $paintBin;
+		
+		select -r ($material+"_coat");
+		binMembership -rm $paintBin;
+		
+		select -r ($material+"_base");
+		binMembership -rm $paintBin;
 
 	}
+	print "spckCreatePaintMaterials Complete.\n";
+
 }
 //
 //
-// Add essential plastic materials
+// Add essential tech materials
 //
-//
+// - created to throb specs
 
 global proc spckCreateTechMaterials() {
 
@@ -897,6 +1027,7 @@ global proc spckCreateTechMaterials() {
 		binMembership -add $techBin;	
 	}
 	*/
+	print "spckCreateTechMaterials Complete.\n";
 }
 
 
