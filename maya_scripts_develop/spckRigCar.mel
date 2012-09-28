@@ -83,7 +83,7 @@ global proc spckRigCar() {
 	
 	// Give some feedback for next steps
 	
-	string $message = "\nEat some poo.";
+	string $message = "\nMega Success!";
 	
 	string $result = `confirmDialog 
 		-title "spckRenameCar Success!"
@@ -333,7 +333,7 @@ global proc spckRigCar_CentreWheelPivots ( string $car )
 			$pivotY = ($bounds[1]+$bounds[4])/2;
 			$pivotZ = ($bounds[2]+$bounds[5])/2;
 			
-			move -a -os $pivotX $pivotY $pivotZ ($wheel+".scalePivot") ($wheel+".rotatePivot");
+			move -a -ws $pivotX $pivotY $pivotZ ($wheel+".scalePivot") ($wheel+".rotatePivot");
 			move -a -ws $pivotX $pivotY $pivotZ ($brake+".scalePivot") ($brake+".rotatePivot");
 			
 			// Constrain brake to wheel first before adjusting then unconstrain
@@ -357,20 +357,16 @@ global proc spckRigCar_CentreWheelPivots ( string $car )
 		$pivotY = ($bounds[1]+$bounds[4])/2;
 		$pivotZ = ($bounds[2]+$bounds[5])/2;
 		
-		// Move wheel to centre - then move back - this moves translate pivot to something useable by other 3d programs.
+		move -a -ws $pivotX $pivotY $pivotZ ($wheel+".scalePivot") ($wheel+".rotatePivot");
+		move -a -ws $pivotX $pivotY $pivotZ ($brake+".scalePivot") ($brake+".rotatePivot");
 		
-		move -a -ws (-$pivotX) (-$pivotY) (-$pivotZ) $wheel $brake;
-		refresh;
+		// Reset pivot
 		
 		select -r $wheel;
-		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;				// Freeze transform on the wheels
+		xform -ztp;
 		
 		select -r $brake;
-		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;				// Freeze transform on the brakes
-		
-		move -a -ws $pivotX $pivotY $pivotZ $wheel $brake;
-		refresh;
-		
+		xform -ztp;		
 	}
 	
 	select -cl;
@@ -785,22 +781,21 @@ global proc spckRigCar_CreateAndAttachBodyDummies (string $car )
 	$pivotY = $wheelBounds[4];
 	$pivotZ = ($bounds[2]+$bounds[5])/2;
 	
-	/*
+	
 	move -a -ws 0 $pivotY 0 ($car + $Body+".scalePivot") ($car + $Body+".rotatePivot") ;
 	move -a -ws 0 $pivotY 0 ($car + $Wheels+".scalePivot") ($car + $Wheels+".rotatePivot") ;
 	move -a -ws 0 0 0 ($car+".scalePivot") ($car+".rotatePivot") ;
-	*/
+	
+	select ($car + $Body);
+	xform -ztp;
 
-	// Move car to centre - then move back - this moves translate pivot to something useable by other 3d programs.
+	select ($car + $Wheels);
+	xform -ztp;
+
+	select ($car);
+	xform -ztp;	
 	
-	move -a -ws 0 (-$pivotY) 0 ($car + $Body);
-	refresh;
 	
-	select -r ($car + $Body);
-	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;				// Freeze transform on the body
-	
-	move -a -ws 0 $pivotY 0 ($car + $Body);
-	refresh;
 	
 	curve -n $bodyRotDummy -d 3 -p 0 0 -150 -p 0 0 -150 -p 0 60 -150 -p 0 60 -150 -p 0 60 -150 -p 0 0 150 -p 0 0 150 -k 0 -k 0 -k 0 -k 1 -k 1 -k 1 -k 2 -k 2 -k 2 ;
 	parent $bodyRotDummy $car;

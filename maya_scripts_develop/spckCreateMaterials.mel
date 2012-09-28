@@ -155,6 +155,14 @@ global proc spckCreatePlasticMaterials() {
 		setAttr ($material+".useFresnel") 1;
 		setAttr ($material+".reflectionColorAmount") 0.4;
 		setAttr ($material+".refractionIOR") 1.584;
+		
+		// Set Multimatte ID
+		
+		vrayAddAttr $material vrayColorId;
+		vrayAddAttr $material vrayMaterialId;
+		
+		setAttr ($material+".vrayMaterialId") 7;
+
 	}
 	
 	// Setup Amounts of reflection glossiness for plastics
@@ -373,6 +381,14 @@ global proc spckCreateMetalMaterials() {
 		
 		connectAttr -f ($material+"_colourRamp.outColor") ($material+"_colourRamp_gamma.value");
 		connectAttr -f ($material+"_colourRamp_gamma.outValue") ($material+".color");
+		
+		// Set Multimatte ID
+		
+		vrayAddAttr $material vrayColorId;
+		vrayAddAttr $material vrayMaterialId;
+		
+		setAttr ($material+".vrayMaterialId") 8;
+
 	}
 	
 	// Setup Undercarriage
@@ -438,6 +454,14 @@ global proc spckCreateChromeMaterials() {
 		setAttr ($material+".brdfType") 0;
 		setAttr ($material+".useFresnel") 1;
 		setAttr ($material+".refractionIOR") 20;
+		
+		// Set Multimatte ID
+		
+		vrayAddAttr $material vrayColorId;
+		vrayAddAttr $material vrayMaterialId;
+		
+		setAttr ($material+".vrayMaterialId") 9;
+
 	}
 
 	// Setup Amounts of reflection glossiness for plastics
@@ -546,6 +570,13 @@ global proc spckCreateWheelMaterials() {
 		setAttr ($material+".refractionIOR") 21;
 		setAttr ($material+".brdfType") 0;
 		setAttr ($material+".useFresnel") 1;
+		
+		// Set Multimatte ID
+		
+		vrayAddAttr $material vrayColorId;
+		vrayAddAttr $material vrayMaterialId;
+		
+		setAttr ($material+".vrayMaterialId") 12;
 	}
 	print "spckCreateWheelMaterials Complete.\n";
 }
@@ -578,6 +609,14 @@ global proc spckCreateBrakeMaterials() {
 		select -r $material;
 		binMembership -add $brakeBin;
 		binMembership -add $metalBin;
+		
+		// Set Multimatte ID
+		
+		vrayAddAttr $material vrayColorId;
+		vrayAddAttr $material vrayMaterialId;
+		
+		setAttr ($material+".vrayMaterialId") 12;
+
 	}
 	
 	
@@ -805,6 +844,14 @@ global proc spckCreateWindowMaterials() {
 		setAttr ($material+"_fogRamp.colorEntryList[0].color") -type double3 0.93 0.95 0.94;
 		setAttr ($material+".fogBias") 1;
 		setAttr ($material+".doubleSided") 0;
+		
+		// Set Multimatte ID
+		
+		vrayAddAttr $material vrayColorId;
+		vrayAddAttr $material vrayMaterialId;
+		
+		setAttr ($material+".vrayMaterialId") 3;
+
 	}
 	
 	
@@ -968,7 +1015,13 @@ global proc spckCreatePaintMaterials() {
 			
 			setAttr ($material+"_base.swatchAutoUpdate") 0;
 			setAttr ($material+"_coat.swatchAutoUpdate") 0;
-
+			
+			// Set Multimatte ID
+			
+			vrayAddAttr $material vrayColorId;
+			vrayAddAttr $material vrayMaterialId;
+			
+			setAttr ($material+".vrayMaterialId") 1;
 		}
 				
 		select -r $material;

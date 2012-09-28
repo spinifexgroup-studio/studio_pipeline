@@ -87,6 +87,14 @@ global proc spckSetupScene() {
 	setAttr defaultResolution.deviceAspectRatio ($spckDefaultWidth/float($spckDefaultHeight));
 	setAttr vraySettings.aspectRatio ($spckDefaultWidth/float($spckDefaultHeight));
 	
+	setAttr -type "string" "defaultRenderGlobals.imageFilePrefix" "%s/%c/%l/%s.%c.%l";
+	setAttr -type "string" "vraySettings.fileNamePrefix" "%s/%c/%l/%s.%c.%l";
+	
+	setAttr "vraySettings.dontSaveImage" 1;
+	setAttr "vraySettings.sys_regsgen_xc" 32;
+
+
+	
 	//Setup Linear Workflow
 	setAttr vraySettings.cmap_linearworkflow 0;
 	setAttr vraySettings.cmap_adaptationOnly 1;
@@ -200,25 +208,34 @@ global proc spckSetupScene() {
 	
 	vrayAddRenderElement MultiMatteElement;
 	rename vrayRE_Multi_Matte "vrayRE_Multi_Matte_Parts";
+	
+	vrayAddRenderElement MultiMatteElement;
+	rename vrayRE_Multi_Matte "vrayRE_Multi_Matte_Wheels";
 
 	setAttr -type "string" vrayRE_Multi_Matte_Main.vray_name_multimatte "multimatte_main";
 	setAttr -type "string" vrayRE_Multi_Matte_Lights.vray_name_multimatte "multimatte_lights";
 	setAttr -type "string" vrayRE_Multi_Matte_Parts.vray_name_multimatte "multimatte_parts";
+	setAttr -type "string" vrayRE_Multi_Matte_Wheels.vray_name_multimatte "multimatte_wheels";
 
-	setAttr "vrayRE_Multi_Matte_Main.vray_redid_multimatte" 		1;
-	setAttr "vrayRE_Multi_Matte_Main.vray_greenid_multimatte" 		2;
-	setAttr "vrayRE_Multi_Matte_Main.vray_blueid_multimatte" 		3;
+	setAttr "vrayRE_Multi_Matte_Main.vray_redid_multimatte" 		1; //Paint
+	setAttr "vrayRE_Multi_Matte_Main.vray_greenid_multimatte" 		2; //TBA
+	setAttr "vrayRE_Multi_Matte_Main.vray_blueid_multimatte" 		3; //window
 	setAttr "vrayRE_Multi_Matte_Main.vray_usematid_multimatte" 		1;
 	
-	setAttr "vrayRE_Multi_Matte_Lights.vray_redid_multimatte" 		4;
-	setAttr "vrayRE_Multi_Matte_Lights.vray_greenid_multimatte" 	5;
-	setAttr "vrayRE_Multi_Matte_Lights.vray_blueid_multimatte" 		6;
+	setAttr "vrayRE_Multi_Matte_Lights.vray_redid_multimatte" 		4; //Rear
+	setAttr "vrayRE_Multi_Matte_Lights.vray_greenid_multimatte" 	5; //Fog & side lights
+	setAttr "vrayRE_Multi_Matte_Lights.vray_blueid_multimatte" 		6; //Headlights
 	setAttr "vrayRE_Multi_Matte_Lights.vray_usematid_multimatte" 	0;
 
-	setAttr "vrayRE_Multi_Matte_Parts.vray_redid_multimatte" 		7;
+	setAttr "vrayRE_Multi_Matte_Parts.vray_redid_multimatte" 		7; //Plastic
 	setAttr "vrayRE_Multi_Matte_Parts.vray_greenid_multimatte" 		8;
-	setAttr "vrayRE_Multi_Matte_Parts.vray_blueid_multimatte" 		9;
+	setAttr "vrayRE_Multi_Matte_Parts.vray_blueid_multimatte" 		9; //Chrome
 	setAttr "vrayRE_Multi_Matte_Parts.vray_usematid_multimatte" 	1;
+
+	setAttr "vrayRE_Multi_Matte_Wheels.vray_redid_multimatte" 		10; //Brake
+	setAttr "vrayRE_Multi_Matte_Wheels.vray_greenid_multimatte" 	11; //Tyre
+	setAttr "vrayRE_Multi_Matte_Wheels.vray_blueid_multimatte" 		12; //Alloy
+	setAttr "vrayRE_Multi_Matte_Wheels.vray_usematid_multimatte" 	1;
 
 	
 	// Make overrides for matte channels
@@ -252,7 +269,7 @@ global proc spckSetupScene() {
 	setAttr "vraySettings.spckSetupScene" 1;
 
 	
-	//	Close render window, select nothing and return to default render layer 
+	//	Close render window, select nothing and return to default render layer
 	
 	window -e -vis 0 unifiedRenderGlobalsWindow;
 	editRenderLayerGlobals -currentRenderLayer "defaultRenderLayer";
