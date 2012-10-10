@@ -24,7 +24,6 @@ global proc spckSetupScene() {
 	
 	string $select[] 			= `ls`;
 
-	
 	for ( $node in $select )     // process each selection
 	{
 		if ( $node == "vraySettings" )

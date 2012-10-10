@@ -738,8 +738,10 @@ global proc spckCreateBrakeMaterials() {
 //
 //
 // Add standard glass
+<<<<<<< HEAD
+=======
 //
-// - created to roy specs
+//
 
 
 global proc spckCreateClearGlassMaterials() {
@@ -748,7 +750,6 @@ global proc spckCreateClearGlassMaterials() {
 	string $glassThin		= "VR_Glass_Clear_Thin";
 
 	string $glassBin		= "Car_Glass";
-	string $bulbBin			= "Car_Lights";
 	
 	string $materialList[] = { $glassSolid,
 							$glassThin
@@ -763,14 +764,89 @@ global proc spckCreateClearGlassMaterials() {
 		}
 		select -r $material;
 		binMembership -add $glassBin;
-		binMembership -add $bulbBin;
 		
 		//Setup common settings
 		setAttr ($material+".color") -type double3 0 0 0;
 		setAttr ($material+".brdfType") 1;
 		setAttr ($material+".reflectionColor") -type double3 1 1 1;
 		setAttr ($material+".reflectionColorAmount") 0.9;
+		setAttr ($material+".useFresnel") 1;
+	}
+	
+	//Setup Thick Glass
+	setAttr ($glassSolid+".lockFresnelIORToRefractionIOR") 1;
+	setAttr ($glassSolid+".fresnelIOR") 1.584;
+	setAttr ($glassSolid+".refractionIOR") 1.584;
+
+	//Setup Thin Glass
+	setAttr ($glassThin+".lockFresnelIORToRefractionIOR") 0;
+	setAttr ($glassThin+".fresnelIOR") 2.0;
+	setAttr ($glassThin+".refractionIOR") 1.005;
+
+}
+
+
+//
+//
+// Add window materials
+//
+>>>>>>> stuff at home - may break
+//
+// - created to roy specs
+
+
+<<<<<<< HEAD
+global proc spckCreateClearGlassMaterials() {
+
+	string $glassSolid		= "VR_Glass_Clear_Solid";
+	string $glassThin		= "VR_Glass_Clear_Thin";
+
+	string $glassBin		= "Car_Glass";
+	string $bulbBin			= "Car_Lights";
+	
+	string $materialList[] = { $glassSolid,
+							$glassThin
+=======
+	spckCreateClearGlassMaterials();
+
+	string $glassSmokeSolid		= "VR_Glass_Smoke_Solid";
+	string $glassSmokeThin		= "VR_Glass_Smoke_Thin";
+	string $glassSmokeOpaque	= "VR_Glass_Smoke_Opaque";
+
+	string $windowBin			= "Car_Window_Glass";
+	string $glassBin			= "Car_Glass";
+
+	string $materialList[] = { $glassSmokeSolid,
+							$glassSmokeThin,
+							$glassSmokeOpaque
+>>>>>>> stuff at home - may break
+							};
+							
+	// Check if window shader exists - if not create it - add to window bin
+	for ($material in $materialList) {
+		if (!objExists($material)){
+			shadingNode -n $material -asShader VRayMtl;
+			sets -renderable true -noSurfaceShader true -empty -name ($material+"SG");
+			connectAttr -f ($material+".outColor") ($material+"SG.surfaceShader");
+		}
+		select -r $material;
+<<<<<<< HEAD
+		binMembership -add $glassBin;
+		binMembership -add $bulbBin;
+=======
+		binMembership -add $windowBin;
+		binMembership -add $glassBin;
+>>>>>>> stuff at home - may break
+		
+		//Setup common settings
+		setAttr ($material+".color") -type double3 0 0 0;
+		setAttr ($material+".brdfType") 1;
+		setAttr ($material+".reflectionColor") -type double3 1 1 1;
+		setAttr ($material+".reflectionColorAmount") 0.9;
+<<<<<<< HEAD
 		setAttr ($material+".refractionColor") -type double3 1 1 1;
+=======
+>>>>>>> stuff at home - may break
 		setAttr ($material+".useFresnel") 1;
 	}
 	
@@ -791,7 +867,7 @@ global proc spckCreateClearGlassMaterials() {
 
 //
 //
-// Add window materials
+// Add Paint materials
 //
 // - created to roy specs
 
@@ -1071,7 +1147,7 @@ global proc spckCreateTechMaterials() {
 	/*
 	// Create TopDown
 	if (!objExists($topDowntex)){
-		catchQuiet ( $node = vrayCreateNodeFromDll ($topDowntex, "texture", "TexFalloff", 2)); //suppress error on making texture - may break in future
+		catchQuiet ( vrayCreateNodeFromDll ($topDowntex, "texture", "TexFalloff", 2));
 		setAttr ($topDowntex+".color1") -type double3 1 0 0 ;
 		setAttr ($topDowntex+".color2") -type double3 1 0 0 ;
 		setAttr ($topDowntex+".direction_type") 2;
@@ -1080,7 +1156,10 @@ global proc spckCreateTechMaterials() {
 		binMembership -add $techBin;	
 	}
 	*/
+<<<<<<< HEAD
 	print "spckCreateTechMaterials Complete.\n";
+=======
+>>>>>>> stuff at home - may break
 }
 
 
