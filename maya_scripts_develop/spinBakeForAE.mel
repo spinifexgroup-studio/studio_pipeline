@@ -74,6 +74,7 @@ global proc spinBakeForAE () {
 	{
 		string $objType = `nodeType $node`;
 		if (  $objType == "camera" ||  $objType == "locator" )
+		
 		{
 		
 			string $object;
@@ -86,10 +87,8 @@ global proc spinBakeForAE () {
 				return;
 			}
 			
-			if (  $objType == "camera" ||  (startsWith( tolower ($object) , "null")) )
-			{
-				stringArrayInsertAtIndex(size($objectsToDuplicate), $objectsToDuplicate, $object);
-			}
+			stringArrayInsertAtIndex(size($objectsToDuplicate), $objectsToDuplicate, $object);
+			
 		}
 		$i++;
 	}
@@ -101,27 +100,64 @@ global proc spinBakeForAE () {
 	
 	for ( $object in $objectsToDuplicate )
 	{
-		string $duplicateObject = $object+"_tempDuplicate";
-		duplicate -rr -n $duplicateObject $object;
+		string $objType = `nodeType $object`;
+		if ( $objType == "locator" )
+		{
+			string $duplicateObject = "null_"+$object+"_tempDuplicate";
+			duplicate -rr -n $duplicateObject $object;
+			string $duplicateObject = substituteAllString($duplicateObject, "|", "_"); // fix for maya 2013, duplicate object now includes group name
+			string $object = substituteAllString($object, "|", "_"); // fix for maya 2013, duplicate object now includes group name
 			
-		parent $duplicateObject $bakedDataforAE;
-		
-		stringArrayInsertAtIndex(size($duplicateObjects), $duplicateObjects, $duplicateObject);
+			parent $duplicateObject $bakedDataforAE;
+			
+			stringArrayInsertAtIndex(size($duplicateObjects), $duplicateObjects, $duplicateObject);
+	
+			// CONSTRAIN NEW TO OLD
+			select -r $object;
+			select -add $duplicateObject;
+			doCreateParentConstraintArgList 1 { "1","0","0","0","0","0","0","1","","1" };
+			parentConstraint -n ($object+"_tempParentConstraint") -mo -weight 1;
+		}
 
-		// CONSTRAIN NEW TO OLD
-		select -r $object;
-		select -add $duplicateObject;
-		doCreateParentConstraintArgList 1 { "1","0","0","0","0","0","0","1","","1" };
-		parentConstraint -n ($object+"_tempParentConstraint") -mo -weight 1;
+		if ( $objType == "camera" )
+		{
+			string $duplicateObject = ("cam_"+$object+"_tempDuplicate");
+			string $duplicateObject = substituteAllString($duplicateObject, "|", "_"); // fix for maya 2013, duplicate object now includes group name
+			float $focalLength = getAttr ($object+".focalLength");
+			
+			camera -name $duplicateObject -centerOfInterest 5 -focalLength $focalLength -lensSqueezeRatio 1 -cameraScale 1 -horizontalFilmAperture 1.41732 -horizontalFilmOffset 0 -verticalFilmAperture 0.94488 -verticalFilmOffset 0 -filmFit Fill -overscan 1 -motionBlur 0 -shutterAngle 144 -nearClipPlane 0.1 -farClipPlane 10000 -orthographic 0 -orthographicWidth 30 -panZoomEnabled 0 -horizontalPan 0 -verticalPan 0 -zoom 1;
+			rename ( $duplicateObject+"1")  $duplicateObject;
+			
+			parent $duplicateObject $bakedDataforAE;
+			
+			stringArrayInsertAtIndex(size($duplicateObjects), $duplicateObjects, $duplicateObject);
+	
+			// CONSTRAIN NEW TO OLD
+			select -r $object;
+			select -add $duplicateObject;
+			$parentConstraintName = ($object+"_tempParentConstraint");
+			string $parentConstraintName = substituteAllString($parentConstraintName, "|", "_"); // fix for maya 2013, duplicate object now includes group name
+			doCreateParentConstraintArgList 1 { "1","0","0","0","0","0","0","1","","1" };
+			parentConstraint -n $parentConstraintName -mo -weight 1;
+			
+			setAttr ($parentConstraintName+".target[0].targetOffsetTranslateX") 0;
+			setAttr ($parentConstraintName+".target[0].targetOffsetTranslateY") 0;
+			setAttr ($parentConstraintName+".target[0].targetOffsetTranslateZ") 0;
+			setAttr ($parentConstraintName+".target[0].targetOffsetRotateX") 0;
+			setAttr ($parentConstraintName+".target[0].targetOffsetRotateY") 0;
+			setAttr ($parentConstraintName+".target[0].targetOffsetRotateZ") 0;
+
+		}
 
 
 	}
 
-	//bakeResults -simulation true -t $bakeRange -sampleBy 1 -disableImplicitControl true -preserveOutsideKeys true -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -bakeOnOverrideLayer false -controlPoints false -shape true { (stringArrayToString ( $duplicateObjects, " ")) };
 	bakeResults -simulation true -t $bakeRange -sampleBy 1 -disableImplicitControl true -preserveOutsideKeys true -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -bakeOnOverrideLayer false -controlPoints false -shape true $duplicateObjects;
 	
 	for ( $object in $objectsToDuplicate ) {
-		rename ($object+"_tempDuplicate") $object;
-		delete ($object+"_tempParentConstraint");
+		string $object = substituteAllString($object, "|", "_"); // fix for maya 2013, duplicate object now includes group name
+		print $object;
+		//rename ($bakedDataforAE+"|"+$object+"_tempDuplicate") ($object+"_baked");
+		//delete ($bakedDataforAE+"|"+$object+"_tempParentConstraint");
 	}
 }
