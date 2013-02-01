@@ -37,6 +37,7 @@ class Scene(object):
 		cmds.currentUnit (linear='cm')
 		cmds.currentUnit (angle='deg')
 		cmds.currentUnit (time='ntsc')
+		cmds.grid ( size = 1000, spacing= 100, divisions = 10, olp = 'edge' , plp = 'axis') 
 
 		# Load VRAY if not active
 		cmds.loadPlugin ('vrayformaya', quiet=True)

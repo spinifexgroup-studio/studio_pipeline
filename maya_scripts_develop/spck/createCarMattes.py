@@ -57,7 +57,7 @@ def createCarMattes():
         cmds.setAttr (layerToMake + '.vray_blueid_multimatte',  12)		# Alloys
         cmds.setAttr (layerToMake + '.vray_usematid_multimatte', True)
 	# Main multimatte for bulbs, lenses and light chome
-	layerToMake = 'multimatte_bulbs_lenses'
+	layerToMake = 'multimatte_bulbsAndLenses'
 	if not cmds.objExists (layerToMake) :
 		renderElement = mel.eval ('vrayAddRenderElement MultiMatteElement;')
 		cmds.rename (renderElement,layerToMake)
