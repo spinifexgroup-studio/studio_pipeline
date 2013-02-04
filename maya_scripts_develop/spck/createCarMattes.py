@@ -67,3 +67,8 @@ def createCarMattes():
         cmds.setAttr (layerToMake + '.vray_greenid_multimatte', 14)		# Lenses
         cmds.setAttr (layerToMake + '.vray_blueid_multimatte',  15)		# Light Chrome
         cmds.setAttr (layerToMake + '.vray_usematid_multimatte', True)
+	# Give some feedback for next steps
+	cmds.select ( clear=True )
+	dialogMessage = 'Car Mattes Created'
+	result = cmds.confirmDialog(title='spck', message=dialogMessage, button=['OK'], defaultButton='OK')
+	print ('Car Mattes Success.\n')

@@ -51,4 +51,8 @@ def createRenderPasses():
 	if not cmds.objExists (layerToMake) :
 		renderElement = mel.eval ('vrayAddRenderElement selfIllumChannel;')
 		cmds.rename (renderElement,layerToMake)
-	print ('Success!')
+	# Give some feedback for next steps
+	cmds.select ( clear=True )
+	dialogMessage = 'Render Passes Created'
+	result = cmds.confirmDialog(title='spck', message=dialogMessage, button=['OK'], defaultButton='OK')
+	print ('Tech Channels Success.\n')

@@ -21,14 +21,15 @@ class Scene(object):
 		if cmds.objExists('vraySettings.setupSceneHasBeenRun'):
 			# Check that everything is setup correctly before continuing.
 			dialogMessage = 'setupScene has already been run. Do you wish to continue? Some of your render settings will be reset.'
-			result = cmds.confirmDialog( title='spckSetupScene', message=dialogMessage, button=['YES','NO'], defaultButton='NO', cancelButton='NO', dismissString='NO' )
+			result = cmds.confirmDialog( title='spck', message=dialogMessage, button=['YES','NO'], defaultButton='NO', cancelButton='NO', dismissString='NO' )
 			if result == 'NO' :
 				print("Aborted. We\'ve done this before...\n")
+				print 'Maybe hit undo? Your render settings just got reset by pressing the shelf button, regardless. I\'ll fix this bug one day.\n'
 				return
 		else:
 			# Check that everything is setup correctly before continuing.
 			dialogMessage = 'Have you set up your workspace.mel?'
-			result = cmds.confirmDialog( title='spckSetupScene', message=dialogMessage, button=['YES','NO'], defaultButton='YES', cancelButton='NO', dismissString='NO' )
+			result = cmds.confirmDialog( title='spck', message=dialogMessage, button=['YES','NO'], defaultButton='YES', cancelButton='NO', dismissString='NO' )
 			if result == 'NO' :
 				print('Go setup your workspace and run again.\n')
 				return
@@ -44,15 +45,16 @@ class Scene(object):
 		cmds.pluginInfo ('vrayformaya', edit=True, autoload=True)
 		cmds.setAttr  ('defaultRenderGlobals.ren', 'vray', type='string')
 
-		#self.createBaseRenderSettings()
-		#cmds.evalDeferred ( 'self.createBaseRenderSettings()' , lowestPriority=True )	
+		#cmds.evalDeferred ( 'self.createBaseRenderSettings()' , lowestPriority=True )
 		print('Scene Setup Success.\n')
 		
 	def createBaseRenderSettings(self):
+		mel.eval ( 'unifiedRenderGlobalsWindow();' )
+		
 		# Setup some variables
 		spckDefaultWidth  = 1920
 		spckDefaultHeight = 1080
-		spckAspectRatio   = float(spckDefaultWidth / spckDefaultHeight)
+		spckAspectRatio   = float(spckDefaultWidth)/float(spckDefaultHeight)
 		spckRenderPath    = '%c/%l/%c.%l'
 
 		# Set Render Globals
@@ -61,6 +63,7 @@ class Scene(object):
 		cmds.setAttr ( 'defaultResolution.width', spckDefaultWidth )
 		cmds.setAttr ( 'defaultResolution.height', spckDefaultHeight )
 		cmds.setAttr ( 'defaultResolution.deviceAspectRatio', spckAspectRatio )
+		cmds.setAttr ( 'defaultResolution.pixelAspect', 1.0 )
 		cmds.setAttr ( 'defaultRenderGlobals.imageFilePrefix', spckRenderPath, type='string' )
 
 		if cmds.objExists('vraySettings'):
@@ -84,6 +87,7 @@ class Scene(object):
 			cmds.setAttr ( 'vraySettings.samplerType', 2 )
 			cmds.setAttr ( 'vraySettings.sys_low_thread_priority', True )
 			cmds.setAttr ( 'vraySettings.aspectRatio', spckAspectRatio )
+			cmds.setAttr ( 'vraySettings.pixelAspect', 1.0 )
 			cmds.setAttr ( 'vraySettings.aaFilterType', 6)
 			cmds.setAttr ( 'vraySettings.aaFilterSize', 2.5)
 			cmds.setAttr ( 'vraySettings.dmcs_adaptiveAmount', 0.85) # Rob N is 0.9, roy likes 0.85
@@ -125,4 +129,8 @@ class Scene(object):
 			cmds.setAttr ( 'vraySettings.ddisplac_maxSubdivs', 8 )
 		
 			cmds.select( clear=True)
+			# Give some feedback for next steps
+			cmds.select ( clear=True )
+			dialogMessage = 'Vray Defaults are set'
+			result = cmds.confirmDialog(title='spck', message=dialogMessage, button=['OK'], defaultButton='OK')
 			print('setBaseRenderSettings Success.\n')

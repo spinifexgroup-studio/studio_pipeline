@@ -7,7 +7,7 @@ import maya.utils as utils
 import maya.mel as mel
 
 class Car(object):
-	def __init__ (self, name='spckCar'):
+	def __init__ (self, name='spckCar '):
 		self.name = self.promptName()
 		self.createGroups ()
 		
@@ -127,4 +127,8 @@ class Car(object):
 		cmds.group ( wheelFL , wheelFR , wheelBL , wheelBR , brakeFL , brakeFR , brakeBL , brakeBR , name = wheels )
 		cmds.group ( headLights , tailLights , fogLights , sideLights , exterior , interior , name = body )
 		cmds.group ( wheels , body , name = self.name )
+		
+		cmds.select ( self.name , replace = True )
+		cmds.addAttr ( longName='isCar', attributeType='message' )			
+
 	
