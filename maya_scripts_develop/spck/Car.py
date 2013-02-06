@@ -15,7 +15,7 @@ class Car(object):
 	def promptName (self):
 		# Ask for a name for the car.
 		dialogMessage = 'Enter name of car:'
-		result = cmds.promptDialog( title='spckCreateCar', message=dialogMessage, button=['OK','Cancel'], defaultButton='OK', cancelButton='Cancel', dismissString='Cancel' )
+		result = cmds.promptDialog( title='spck', message=dialogMessage, button=['OK','Cancel'], defaultButton='OK', cancelButton='Cancel', dismissString='Cancel' )
 		if result == 'OK':
 			carName = cmds.promptDialog (query=True, text=True)
 			if len (carName) > 0:
