@@ -33,7 +33,7 @@ def createCarMattes():
         cmds.setAttr (layerToMake + '.vray_redid_multimatte',   4)		# Read
         cmds.setAttr (layerToMake + '.vray_greenid_multimatte', 5)		# Fog and side lamps
         cmds.setAttr (layerToMake + '.vray_blueid_multimatte',  6)		# Headlights
-        cmds.setAttr (layerToMake + '.vray_usematid_multimatte', True)
+        cmds.setAttr (layerToMake + '.vray_usematid_multimatte', False)
 	# Main multimatte for smaller parts
 	layerToMake = 'multimatte_parts'
 	if not cmds.objExists (layerToMake) :
@@ -55,7 +55,7 @@ def createCarMattes():
         cmds.setAttr (layerToMake + '.vray_redid_multimatte',   10)		# Brake
         cmds.setAttr (layerToMake + '.vray_greenid_multimatte', 11)		# Tyre
         cmds.setAttr (layerToMake + '.vray_blueid_multimatte',  12)		# Alloys
-        cmds.setAttr (layerToMake + '.vray_usematid_multimatte', True)
+        cmds.setAttr (layerToMake + '.vray_usematid_multimatte', False)
 	# Main multimatte for bulbs, lenses and light chome
 	layerToMake = 'multimatte_bulbsAndLenses'
 	if not cmds.objExists (layerToMake) :

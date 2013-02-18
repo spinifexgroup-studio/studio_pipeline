@@ -83,36 +83,48 @@ class Car(object):
 		annotation = cmds.annotate( contactFL , point= (150,0,150) , text='FL' )
 		cmds.select (annotation)
 		cmds.pickWalk ( direction = 'up')
-		cmds.rename ( 'annotationFL' )
-		cmds.parent ( 'annotationFL' , contactFL )
+		cmds.rename ( self.name+'annotationFL' )
+		cmds.parent ( self.name+'annotationFL' , contactFL )
 		
 		annotation = cmds.annotate( contactFR , point= (-150,0,150) , text='FR' )
 		cmds.select (annotation)
 		cmds.pickWalk ( direction = 'up')
-		cmds.rename ( 'annotationFR' )
-		cmds.parent ( 'annotationFR' , contactFR )
+		cmds.rename ( self.name+'annotationFR' )
+		cmds.parent ( self.name+'annotationFR' , contactFR )
 
 
 		annotation = cmds.annotate( contactBL , point= (150,0,-150) , text='BL' )
 		cmds.select (annotation)
 		cmds.pickWalk ( direction = 'up')
-		cmds.rename ( 'annotationBL' )
-		cmds.parent ( 'annotationBL' , contactBL )
+		cmds.rename ( self.name+'annotationBL' )
+		cmds.parent ( self.name+'annotationBL' , contactBL )
 
 
 		annotation = cmds.annotate( contactBR , point= (-150,0,-150) , text='BR' )
 		cmds.select (annotation)
 		cmds.pickWalk ( direction = 'up')
-		cmds.rename ( 'annotationBR' )
-		cmds.parent ( 'annotationBR' , contactBR )
+		cmds.rename ( self.name+'annotationBR' )
+		cmds.parent ( self.name+'annotationBR' , contactBR )
 
 
 		
 		# Group Structure
-		cmds.group ( em=True, name = wheelFL )
-		cmds.group ( em=True, name = wheelFR )
-		cmds.group ( em=True, name = wheelBL )
-		cmds.group ( em=True, name = wheelBR )
+		alloy = '_alloy'
+		tyre = '_tyre'
+		
+		
+		cmds.group ( em=True, name = wheelFL+alloy )
+		cmds.group ( em=True, name = wheelFL+tyre )
+		cmds.group ( em=True, name = wheelFR+alloy )
+		cmds.group ( em=True, name = wheelFR+tyre )
+		cmds.group ( em=True, name = wheelBL+alloy )
+		cmds.group ( em=True, name = wheelBL+tyre )
+		cmds.group ( em=True, name = wheelBR+alloy )
+		cmds.group ( em=True, name = wheelBR+tyre )
+		cmds.group ( wheelFL+alloy , wheelFL+tyre , name = wheelFL )
+		cmds.group ( wheelFR+alloy , wheelFR+tyre , name = wheelFR )
+		cmds.group ( wheelBL+alloy , wheelBL+tyre , name = wheelBL )
+		cmds.group ( wheelBR+alloy , wheelBR+tyre , name = wheelBR )
 		cmds.group ( contactFL , name = brakeFL )
 		cmds.group ( contactFR , name = brakeFR )
 		cmds.group ( contactBL , name = brakeBL )
@@ -127,6 +139,44 @@ class Car(object):
 		cmds.group ( wheelFL , wheelFR , wheelBL , wheelBR , brakeFL , brakeFR , brakeBL , brakeBR , name = wheels )
 		cmds.group ( headLights , tailLights , fogLights , sideLights , exterior , interior , name = body )
 		cmds.group ( wheels , body , name = self.name )
+		
+		# Set object IDs on wheels and Lights
+		
+		mel.eval('vrayAddAttr ' + tailLights + ' vrayObjectID')
+		mel.eval('vrayAddAttr ' + fogLights + ' vrayObjectID')
+		mel.eval('vrayAddAttr ' + sideLights + ' vrayObjectID')
+		mel.eval('vrayAddAttr ' + headLights + ' vrayObjectID')
+
+		mel.eval('vrayAddAttr ' + wheelFL+alloy + ' vrayObjectID')
+		mel.eval('vrayAddAttr ' + wheelFL+tyre + ' vrayObjectID')
+		mel.eval('vrayAddAttr ' + wheelFR+alloy + ' vrayObjectID')
+		mel.eval('vrayAddAttr ' + wheelFR+tyre + ' vrayObjectID')
+		mel.eval('vrayAddAttr ' + wheelBL+alloy + ' vrayObjectID')
+		mel.eval('vrayAddAttr ' + wheelBL+tyre + ' vrayObjectID')
+		mel.eval('vrayAddAttr ' + wheelBR+alloy + ' vrayObjectID')
+		mel.eval('vrayAddAttr ' + wheelBR+tyre + ' vrayObjectID')
+		mel.eval('vrayAddAttr ' + brakeFL + ' vrayObjectID')
+		mel.eval('vrayAddAttr ' + brakeFR + ' vrayObjectID')
+		mel.eval('vrayAddAttr ' + brakeBL + ' vrayObjectID')
+		mel.eval('vrayAddAttr ' + brakeBR + ' vrayObjectID')
+		
+		cmds.setAttr ( tailLights+'.vrayObjectID' , 4 )
+		cmds.setAttr ( fogLights+'.vrayObjectID' , 5 )
+		cmds.setAttr ( sideLights+'.vrayObjectID' , 5 )
+		cmds.setAttr ( headLights+'.vrayObjectID' , 6 )
+
+		cmds.setAttr ( brakeFL+'.vrayObjectID' , 10 )
+		cmds.setAttr ( brakeFR+'.vrayObjectID' , 10 )
+		cmds.setAttr ( brakeBL+'.vrayObjectID' , 10 )
+		cmds.setAttr ( brakeBR+'.vrayObjectID' , 10 )
+		cmds.setAttr ( wheelFL+tyre+'.vrayObjectID' , 11 )
+		cmds.setAttr ( wheelFL+alloy+'.vrayObjectID' , 12 )
+		cmds.setAttr ( wheelFR+tyre+'.vrayObjectID' , 11 )
+		cmds.setAttr ( wheelFR+alloy+'.vrayObjectID' , 12 )
+		cmds.setAttr ( wheelBL+tyre+'.vrayObjectID' , 11 )
+		cmds.setAttr ( wheelBL+alloy+'.vrayObjectID' , 12 )
+		cmds.setAttr ( wheelBR+tyre+'.vrayObjectID' , 11 )
+		cmds.setAttr ( wheelBR+alloy+'.vrayObjectID' , 12 )
 		
 		cmds.select ( self.name , replace = True )
 		cmds.addAttr ( longName='isCar', attributeType='message' )			
