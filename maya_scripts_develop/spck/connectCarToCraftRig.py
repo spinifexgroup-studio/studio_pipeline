@@ -33,11 +33,22 @@ def connectCarToCraftRig():
 				cmds.parentConstraint ( craftRigName+'CarBodyMeshTransform' , carName+'_body' , maintainOffset=True , weight= 1 )
 				
 				carWheels			= [ carName+'_wheelFL' , carName+'_wheelFR' , carName+'_wheelBL' , carName+'_wheelBR' ]		 
-				carBrakes			= [ carName+'_brakeFL' , carName+'_brakeFR' , carName+'_brakeBL' , carName+'_brakeBR' ]		 
-				carContactLocators	= [ 'null_'+carName+'_contactFL' , 'null_'+carName+'_contactFR' , 'null_'+carName+'_contactBL' , 'null_'+carName+'_contactBR' ]
+				carBrakes			= [ carName+'_brakeFL' , carName+'_brakeFR' , carName+'_brakeBL' , carName+'_brakeBR' ]
 				rigWheels			= [ craftRigName+'WheelMesh_FLTransform' , craftRigName+'WheelMesh_FRTransform' , craftRigName+'WheelMesh_BLTransform' , craftRigName+'WheelMesh_BRTransform' ]
 				rigWheelRelocators	= [ craftRigName+'WheelRelocatorMesh_FLTransform' , craftRigName+'WheelRelocatorMesh_FRTransform' , craftRigName+'WheelRelocatorMesh_BLTransform' , craftRigName+'WheelRelocatorMesh_BRTransform' ]
 				rigWheelCenters		= [ craftRigName+'WheelCenterMesh_FLTransform' , craftRigName+'WheelCenterMesh_FRTransform' , craftRigName+'WheelCenterMesh_BLTransform' , craftRigName+'WheelCenterMesh_BRTransform' ]
+
+				#Eats some poo - I mean detect namespaces because the wheel nulls are a special name naming convention for AE
+				carContactLocators = []
+				if ':' in carName:
+					print carName+' has namespacing'
+					carSplit = carName.split (':')
+					namespaceNme = carSplit [0]
+					carNameWithoutNamespace = carSplit [1]
+					carContactLocators	= [ namespaceNme+':null_'+carNameWithoutNamespace+'_contactFL' , namespaceNme+':null_'+carNameWithoutNamespace+'_contactFR' , namespaceNme+':null_'+carNameWithoutNamespace+'_contactBL' , namespaceNme+':null_'+carNameWithoutNamespace+'_contactBR' ]
+				else:
+					carContactLocators	= [ 'null_'+carName+'_contactFL' , 'null_'+carName+'_contactFR' , 'null_'+carName+'_contactBL' , 'null_'+carName+'_contactBR' ]
+
 
 				for i in range (0,4):
 					cmds.xform ( carWheels[i] , centerPivots=True)	
