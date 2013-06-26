@@ -61,6 +61,8 @@ global proc spckAlignWheel() {
 	float $nudge = 0.05;
 	float $threshold = 0.001;
 	float $difference = 1.0;
+	float $rotateYAmount = 0.0;
+	float $rotateZAmount = 0.0;
 
 		
 	for ($i=0 ; $i<3 ; $i++ ) { //filter through the process twice
@@ -69,36 +71,38 @@ global proc spckAlignWheel() {
 	
 		rotate -r -os 0 $nudge 0;
 		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
-		refresh -f;
+		//refresh -f;
 		$sizeBounds = getAnimatedSizeForMeshes( $select );
 		float $newSizeXpos = $sizeBounds[0];
 	
 		rotate -r -os 0 (-2*$nudge) 0;
 		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
-		refresh -f;
+		//refresh -f;
 		$sizeBounds = getAnimatedSizeForMeshes( $select );
 		float $newSizeXneg = $sizeBounds[0];
 		rotate -r -os 0 $nudge 0;
 		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
-		refresh -f;
+		//refresh -f;
 		
+		/*
 		print ("Aligning Wheel: "+$selectItem);
 		print ("Original X size is "+ $sizeX + "\n");
 		print ("Pos Rot X size is "+ $newSizeXpos + "\n");
 		print ("Neg Rot X size is "+ $newSizeXneg + "\n\n");
+		*/
 	
 		if ( $newSizeXpos < $newSizeXneg ) {
-			print "Positive Rotate was smaller\n\n\n";
+			//print "Positive Rotate was smaller\n\n\n";
 		}
 		else if ( $newSizeXpos > $newSizeXneg ){
-			print "Negative Rotate was smaller\n\n\n";
+			//print "Negative Rotate was smaller\n\n\n";
 			$nudge = -$nudge;
 		}
 		else {
 			$newSizeX=$sizeX;
 			$difference = -1;
 		}
-	
+
 		while ( $difference > 0 ) {
 			
 			$sizeX = $newSizeX;
@@ -110,14 +114,7 @@ global proc spckAlignWheel() {
 			$newSizeX = $sizeBounds[0];
 			$difference = $sizeX - $newSizeX;
 			
-			/*
-			print ("sizeX = "+$sizeX+"\n"); 
-			print ("newSizeX = "+$newSizeX+"\n"); 
-			print ($sizeX - $newSizeX);
-			print "\n";
-	
-			print $difference;
-			*/
+			$rotateYAmount = $rotateYAmount+$nudge;			
 		}	
 		
 		// Align wheel on X-bounds, Z-axis
@@ -138,15 +135,17 @@ global proc spckAlignWheel() {
 		makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
 		refresh -f;
 		
+		/*
 		print ("Original X size is "+ $sizeX + "\n");
 		print ("Pos Rot X size is "+ $newSizeXpos + "\n");
 		print ("Neg Rot X size is "+ $newSizeXneg + "\n\n");
+		*/
 	
 		if ( $newSizeXpos < $newSizeXneg ) {
-			print "Positive Rotate was smaller\n\n";
+			//print "Positive Rotate was smaller\n\n";
 		}
 		else if ( $newSizeXpos > $newSizeXneg ){
-			print "Negative Rotate was smaller\n\n";
+			//print "Negative Rotate was smaller\n\n";
 			$nudge = -$nudge;
 		}
 		else {
@@ -164,32 +163,12 @@ global proc spckAlignWheel() {
 			$sizeBounds = getAnimatedSizeForMeshes( $select );
 			$newSizeX = $sizeBounds[0];
 			$difference = $sizeX - $newSizeX;
-			
-			/*
-			print ("sizeX = "+$sizeX+"\n"); 
-			print ("newSizeX = "+$newSizeX+"\n"); 
-			print ($sizeX - $newSizeX);
-			print "\n";
-	
-			print $difference;
-			*/
+			$rotateZAmount = $rotateZAmount+$nudge;
 		}	
 	}
 	
-	/*
-	// Align wheels to sit exactly on the ground
-
-	$sizeBounds = getAnimatedSizeForMeshes( $select );
-	$bounds = getAnimatedBoundsForMeshes( $select );
-	float $moveY = $sizeBounds[1] - $bounds[4];
-	
-	move -a -ws -y $moveY;
-
-	// Do the final pivot set
-	 
-	makeIdentity -apply true -t 1 -r 1 -s 1 -n 0;
-	*/
-	
+	print ("Rotated on Y "+$rotateYAmount+" degrees\n"); 
+	print ("Rotated on Z "+$rotateZAmount+" degrees\n"); 
 	print "Complete\n";
 }
 
