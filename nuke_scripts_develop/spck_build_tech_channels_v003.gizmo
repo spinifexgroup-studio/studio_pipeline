@@ -1,0 +1,436 @@
+#! /Applications/Nuke7.0v6/NukeX7.0v6.app/../Nuke7.0v6.app/Contents/MacOS/Nuke7.0v6 -nx
+version 7.0 v6
+Gizmo {
+inputs 11
+addUserKnob {20 User}
+addUserKnob {26 Version -STARTLINE T v002_2013-03-13}
+}
+Input {
+inputs 0
+name topDown
+label "\[value number]"
+xpos 400
+ypos -1022
+number 10
+}
+Input {
+inputs 0
+name UV
+label "\[value number]"
+xpos 70
+ypos -1022
+number 9
+}
+Input {
+inputs 0
+name worldXYZ
+label "\[value number]"
+xpos -260
+ypos -1022
+number 8
+}
+Input {
+inputs 0
+name surfaceNormals
+label "\[value number]"
+xpos -590
+ypos -1027
+number 7
+}
+Input {
+inputs 0
+name cameraNormals
+label "\[value number]"
+xpos -920
+ypos -1022
+number 6
+}
+Input {
+inputs 0
+name worldNormals
+label "\[value number]"
+xpos -1250
+ypos -1027
+number 5
+}
+Input {
+inputs 0
+name AO
+label "\[value number]"
+xpos -1580
+ypos -1022
+number 4
+}
+Input {
+inputs 0
+name depthAA
+label "\[value number]"
+xpos -1910
+ypos -1022
+number 3
+}
+Input {
+inputs 0
+name depth
+label "\[value number]"
+xpos -2240
+ypos -1027
+number 2
+}
+Input {
+inputs 0
+name main
+label "\[value number]"
+xpos -2680
+ypos -730
+}
+set N40419d40 [stack 0]
+Copy {
+inputs 2
+from0 rgba.red
+to0 depth.Z
+name copy_zDepth
+xpos -2240
+ypos -730
+}
+Input {
+inputs 0
+name tech
+label "\[value number]"
+xpos -2675
+ypos -398
+number 1
+}
+set N40426ee0 [stack 0]
+Dot {
+name Dot2
+xpos -2212
+ypos -396
+}
+set N4042a9c0 [stack 0]
+push $N40419d40
+Copy {
+inputs 2
+from0 depth.Z
+to0 depth.Z
+name Copy1
+xpos -2240
+ypos -494
+}
+Switch {
+inputs 2
+which {{"\[exists parent.input2]"}}
+name Switch1
+xpos -2078
+ypos -609
+}
+set N404381d0 [stack 0]
+add_layer {depth depth.Zaa}
+Copy {
+inputs 2
+from0 rgba.red
+to0 depth.Zaa
+name copy_zDepthAA
+xpos -1910
+ypos -734
+}
+push $N4042a9c0
+Dot {
+name Dot1
+xpos -1882
+ypos -396
+}
+set N404478f0 [stack 0]
+push $N404381d0
+Copy {
+inputs 2
+from0 depth.Zaa
+to0 depth.Zaa
+name Copy2
+xpos -1910
+ypos -494
+}
+Switch {
+inputs 2
+which {{"\[exists parent.input3]"}}
+name Switch2
+xpos -1729
+ypos -609
+}
+set N40454f10 [stack 0]
+add_layer {ao ao.ao}
+Copy {
+inputs 2
+from0 rgba.red
+to0 ao.ao
+name copy_AO
+xpos -1580
+ypos -730
+}
+push $N404478f0
+Dot {
+name Dot3
+xpos -1552
+ypos -396
+}
+set N40464620 [stack 0]
+push $N40454f10
+add_layer {AO AO.red AO.green AO.blue}
+Copy {
+inputs 2
+from0 -rgba.alpha
+to0 -rgba.alpha
+channels AO
+name Copy3
+xpos -1580
+ypos -494
+}
+Switch {
+inputs 2
+which {{"\[exists parent.input4]"}}
+name Switch3
+xpos -1411
+ypos -609
+}
+set N40471a70 [stack 0]
+add_layer {worldNormals worldNormals.red worldNormals.green worldNormals.blue worldNormals.X worldNormals.Y worldNormals.Z}
+Copy {
+inputs 2
+from0 rgba.red
+to0 worldNormals.X
+from1 rgba.green
+to1 worldNormals.Y
+from2 rgba.blue
+to2 worldNormals.Z
+name copy_normals
+xpos -1250
+ypos -741
+}
+push $N40464620
+Dot {
+name Dot4
+xpos -1222
+ypos -396
+}
+set N40480f90 [stack 0]
+push $N40471a70
+add_layer {normals_world normals_world.red normals_world.green normals_world.blue}
+Copy {
+inputs 2
+from0 -rgba.alpha
+to0 -rgba.alpha
+channels normals_world
+name Copy4
+xpos -1250
+ypos -494
+}
+Switch {
+inputs 2
+which {{"\[exists parent.input5]"}}
+name Switch4
+xpos -1087
+ypos -609
+}
+set N4048e8e0 [stack 0]
+add_layer {cameraNormals cameraNormals.red cameraNormals.green cameraNormals.blue cameraNormals.X cameraNormals.Y cameraNormals.Z}
+Copy {
+inputs 2
+from0 rgba.red
+to0 cameraNormals.X
+from1 rgba.green
+to1 cameraNormals.Y
+from2 rgba.blue
+to2 cameraNormals.Z
+name copy_normals1
+xpos -920
+ypos -741
+}
+push $N40480f90
+Dot {
+name Dot5
+xpos -892
+ypos -396
+}
+set N4049de50 [stack 0]
+push $N4048e8e0
+add_layer {normals_camera normals_camera.red normals_camera.green normals_camera.blue}
+Copy {
+inputs 2
+from0 -rgba.alpha
+to0 -rgba.alpha
+channels normals_camera
+name Copy5
+xpos -920
+ypos -495
+}
+Switch {
+inputs 2
+which {{"\[exists parent.input6]"}}
+name Switch5
+xpos -750
+ypos -609
+}
+set N404ab5d0 [stack 0]
+add_layer {surfaceNormals surfaceNormals.X surfaceNormals.Y surfaceNormals.Z}
+Copy {
+inputs 2
+from0 rgba.red
+to0 surfaceNormals.X
+from1 rgba.green
+to1 surfaceNormals.Y
+from2 rgba.blue
+to2 surfaceNormals.Z
+name copy_normals2
+xpos -590
+ypos -745
+}
+push $N4049de50
+Dot {
+name Dot6
+xpos -562
+ypos -396
+}
+set N404bab10 [stack 0]
+push $N404ab5d0
+add_layer {normals_surface normals_surface.X normals_surface.Y normals_surface.Z}
+Copy {
+inputs 2
+from0 -rgba.alpha
+to0 -rgba.alpha
+channels normals_surface
+name Copy6
+xpos -590
+ypos -494
+}
+Switch {
+inputs 2
+which {{"\[exists parent.input7]"}}
+name Switch6
+xpos -426
+ypos -609
+}
+set N404c83d0 [stack 0]
+add_layer {worldXYZ worldXYZ.red worldXYZ.green worldXYZ.blue worldXYZ.X worldXYZ.Y worldXYZ.Z}
+Copy {
+inputs 2
+from0 rgba.red
+to0 worldXYZ.X
+from1 rgba.green
+to1 worldXYZ.Y
+from2 rgba.green
+to2 worldXYZ.Z
+name copy_world_XYZ
+xpos -260
+ypos -741
+}
+push $N404bab10
+Dot {
+name Dot7
+xpos -232
+ypos -396
+}
+set N404d7b10 [stack 0]
+push $N404c83d0
+Copy {
+inputs 2
+from0 -rgba.alpha
+to0 -rgba.alpha
+channels worldXYZ
+name Copy7
+xpos -260
+ypos -494
+}
+Switch {
+inputs 2
+which {{"\[exists parent.input8]"}}
+name Switch7
+xpos -94
+ypos -609
+}
+set N404e50f0 [stack 0]
+add_layer {forward uv.U uv.V}
+Copy {
+inputs 2
+from0 rgba.red
+to0 uv.U
+from1 rgba.green
+to1 uv.V
+name copy_UV
+xpos 70
+ypos -736
+}
+push $N404d7b10
+Dot {
+name Dot8
+xpos 98
+ypos -396
+}
+set N404f4800 [stack 0]
+push $N404e50f0
+add_layer {UV UV.red UV.green UV.blue}
+Copy {
+inputs 2
+from0 -rgba.alpha
+to0 -rgba.alpha
+channels UV
+name Copy8
+xpos 70
+ypos -494
+}
+Switch {
+inputs 2
+which {{"\[exists parent.input9]"}}
+name Switch8
+xpos 238
+ypos -609
+}
+set N40505d30 [stack 0]
+add_layer {topDown topDown.top topDown.down}
+Copy {
+inputs 2
+from0 rgba.red
+to0 topDown.top
+from1 rgba.green
+to1 topDown.down
+name copy_topDown
+xpos 400
+ypos -736
+}
+push $N404f4800
+Dot {
+name Dot9
+xpos 428
+ypos -396
+}
+push $N40505d30
+Copy {
+inputs 2
+from0 -rgba.alpha
+to0 -rgba.alpha
+channels topDown
+name Copy9
+xpos 400
+ypos -494
+}
+Switch {
+inputs 2
+which {{"\[exists parent.input10]"}}
+name Switch9
+xpos 578
+ypos -609
+}
+Output {
+name Output1
+xpos 840
+ypos -609
+}
+push $N40426ee0
+Viewer {
+frame 128
+input_process false
+name Viewer1
+selected true
+xpos -2078
+ypos -585
+}
+end_group

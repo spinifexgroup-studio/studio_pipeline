@@ -1,0 +1,626 @@
+#! /Applications/Nuke7.0v6/NukeX7.0v6.app/../Nuke7.0v6.app/Contents/MacOS/Nuke7.0v6 -nx
+version 7.0 v6
+Gizmo {
+inputs 6
+note_font Verdana
+mapsize {0.15 0.15}
+addUserKnob {20 User}
+addUserKnob {26 Version -STARTLINE T v002_2013-03-13}
+}
+BackdropNode {
+inputs 0
+name BackdropNode1
+tile_color 0x3a4f5eff
+label "Car Comp\n\ngenerate mattes"
+note_font_size 48
+note_font_color 0xfefefeff
+xpos -3128
+ypos -1148
+bdwidth 5197
+bdheight 966
+}
+StickyNote {
+inputs 0
+name StickyNote14
+tile_color 0xcdffff
+label "This row puts mattes onto alphas.\nPipe new matte files into shuffle nodes\nas/if required"
+note_font Verdana
+note_font_size 16
+xpos -2388
+ypos -605
+}
+StickyNote {
+inputs 0
+name StickyNote11
+tile_color 0x1fff00ff
+label multimatte_main
+note_font_size 18
+xpos -1127
+ypos -1037
+}
+StickyNote {
+inputs 0
+name StickyNote13
+tile_color 0x1fff00ff
+label multimatte_lights
+note_font_size 18
+xpos -376
+ypos -1013
+}
+StickyNote {
+inputs 0
+name StickyNote15
+tile_color 0xcdffff
+label "This row copies alphas onto named\nmatte channels\nDO NOT TOUCH"
+note_font Verdana
+note_font_size 16
+xpos -2375
+ypos -484
+}
+StickyNote {
+inputs 0
+name StickyNote37
+tile_color 0x1fff00ff
+label RGBA
+note_font_size 18
+xpos -2421
+ypos -1042
+}
+Input {
+inputs 0
+name wheels
+label "\[value number]"
+xpos 1062
+ypos -1310
+number 5
+}
+Input {
+inputs 0
+name parts
+label "\[value number]"
+xpos 314
+ypos -1310
+number 4
+}
+Input {
+inputs 0
+name lights
+label "\[value number]"
+xpos -456
+ypos -1320
+number 3
+}
+Input {
+inputs 0
+name main
+label "\[value number]"
+xpos -1228
+ypos -1325
+number 2
+}
+Input {
+inputs 0
+name RGBA
+label "\[value number]"
+xpos -2508
+ypos -1310
+}
+Dot {
+name Dot4
+xpos -2480
+ypos -1207
+}
+set N7f552ef0 [stack 0]
+add_layer {multimatte_main multimatte_main.red multimatte_main.green multimatte_main.blue}
+Shuffle {
+in multimatte_main
+name shuffle_multimatte_main
+xpos -1368
+ypos -1204
+}
+Switch {
+inputs 2
+which {{"\[exists parent.input2]"}}
+name Switch1
+xpos -1228
+ypos -1204
+}
+set N7f562050 [stack 0]
+add_layer {multimatte_lights multimatte_lights.red multimatte_lights.green multimatte_lights.blue}
+Shuffle {
+in multimatte_lights
+name shuffle_multimatte_lights
+xpos -578
+ypos -1204
+}
+Switch {
+inputs 2
+which {{"\[exists parent.input3]"}}
+name Switch2
+xpos -456
+ypos -1204
+}
+set N7f573260 [stack 0]
+add_layer {multimatte_parts multimatte_parts.red multimatte_parts.green multimatte_parts.blue}
+Shuffle {
+in multimatte_parts
+name shuffle_multimatte_parts
+xpos 170
+ypos -1204
+}
+Switch {
+inputs 2
+which {{"\[exists parent.input4]"}}
+name Switch3
+xpos 314
+ypos -1204
+}
+set N7f584480 [stack 0]
+add_layer {multimatte_wheels multimatte_wheels.red multimatte_wheels.green multimatte_wheels.blue}
+Shuffle {
+in multimatte_wheels
+name shuffle_multimatte_wheels
+xpos 842
+ypos -1202
+}
+Switch {
+inputs 2
+which {{"\[exists parent.input5]"}}
+name Switch5
+xpos 1062
+ypos -1202
+}
+Dot {
+name Dot1
+xpos 1090
+ypos -678
+}
+set N7f59b1a0 [stack 0]
+Dot {
+name Dot2
+xpos 1310
+ypos -678
+}
+set N7f59ec90 [stack 0]
+Dot {
+name Dot3
+xpos 1530
+ypos -678
+}
+Shuffle {
+in rgb
+red blue
+green blue
+alpha blue
+name Shuffle_matte_alloys1
+xpos 1502
+ypos -604
+postage_stamp true
+}
+push $N7f59ec90
+Shuffle {
+in rgb
+red green
+blue green
+alpha green
+name Shuffle_matte_tyres1
+xpos 1282
+ypos -598
+postage_stamp true
+}
+push $N7f59b1a0
+Shuffle {
+in rgb
+green red
+blue red
+alpha red
+name Shuffle_matte_brakes1
+xpos 1062
+ypos -602
+postage_stamp true
+}
+push $N7f584480
+Dot {
+name Dot19
+xpos 342
+ypos -678
+}
+set N7f5c8530 [stack 0]
+Dot {
+name Dot20
+xpos 562
+ypos -678
+}
+set N7f5cbed0 [stack 0]
+Dot {
+name Dot21
+xpos 782
+ypos -678
+}
+Shuffle {
+in rgb
+red blue
+green blue
+alpha blue
+name Shuffle_matte_chrome
+xpos 754
+ypos -603
+postage_stamp true
+}
+push $N7f5cbed0
+Shuffle {
+in rgb
+red green
+blue green
+alpha green
+name Shuffle_matte_metals
+xpos 534
+ypos -607
+postage_stamp true
+}
+push $N7f5c8530
+Shuffle {
+in rgb
+green red
+blue red
+alpha red
+name Shuffle_matte_plastics
+xpos 314
+ypos -609
+postage_stamp true
+}
+push $N7f573260
+Dot {
+name Dot22
+xpos -428
+ypos -678
+}
+set N7f5f5780 [stack 0]
+Dot {
+name Dot23
+xpos -208
+ypos -678
+}
+set N7f5f9320 [stack 0]
+Dot {
+name Dot24
+xpos 12
+ypos -678
+}
+Shuffle {
+in rgb
+red blue
+green blue
+alpha blue
+name Shuffle_matte_lightsClear
+xpos -16
+ypos -603
+postage_stamp true
+}
+push $N7f5f9320
+Shuffle {
+in rgb
+red green
+blue green
+alpha green
+name Shuffle_matte_lightsOrange
+xpos -236
+ypos -603
+postage_stamp true
+}
+push $N7f5f5780
+Shuffle {
+in rgb
+green red
+blue red
+alpha red
+name Shuffle_matte_lightsRed
+xpos -456
+ypos -603
+postage_stamp true
+}
+push $N7f562050
+Dot {
+name Dot15
+xpos -1200
+ypos -678
+}
+set N7f626a60 [stack 0]
+Dot {
+name Dot17
+xpos -980
+ypos -678
+}
+set N7f62a400 [stack 0]
+Dot {
+name Dot18
+xpos -760
+ypos -678
+}
+Shuffle {
+in rgb
+red blue
+green blue
+alpha blue
+name Shuffle_matte_windows
+xpos -788
+ypos -603
+postage_stamp true
+}
+push $N7f62a400
+Shuffle {
+in rgb
+red green
+blue green
+alpha green
+name Shuffle_matte_green
+xpos -1008
+ypos -602
+postage_stamp true
+}
+push $N7f626a60
+Shuffle {
+in rgb
+green red
+blue red
+alpha red
+name Shuffle_matte_paint
+xpos -1228
+ypos -603
+postage_stamp true
+}
+Input {
+inputs 0
+name lightInternals
+label "\[value number]"
+xpos -1989
+ypos -1322
+number 1
+}
+Dot {
+name Dot5
+xpos -1961
+ypos -683
+}
+set N7f6575a0 [stack 0]
+Dot {
+name Dot6
+xpos -1741
+ypos -683
+}
+set N7f65b050 [stack 0]
+Dot {
+name Dot7
+xpos -1521
+ypos -683
+}
+Shuffle {
+in rgb
+red blue
+green blue
+alpha blue
+name Shuffle_matte_B
+xpos -1549
+ypos -609
+postage_stamp true
+}
+push $N7f65b050
+Shuffle {
+in rgb
+red green
+blue green
+alpha green
+name Shuffle_matte_G
+xpos -1769
+ypos -603
+postage_stamp true
+}
+push $N7f6575a0
+Shuffle {
+in rgb
+green red
+blue red
+alpha red
+name Shuffle_matte_R
+xpos -1989
+ypos -609
+postage_stamp true
+}
+push $N7f552ef0
+Remove {
+channels multimatte_main
+name remove_multimatte_main
+xpos -2508
+ypos -889
+}
+add_layer {car_mattes_lights car_mattes_lights.rear car_mattes_lights.fog_and_side car_mattes_lights.front car_mattes_lights.orange}
+Remove {
+channels car_mattes_lights
+name remove_multimatte_lights
+xpos -2508
+ypos -855
+}
+Remove {
+channels multimatte_parts
+name reme_multimatte_parts
+xpos -2508
+ypos -822
+}
+Remove {
+channels multimatte_wheels
+name remve_multimatte_wheels
+xpos -2508
+ypos -787
+}
+Dot {
+name Dot28
+xpos -2480
+ypos -473
+}
+add_layer {car_mattes_light_internals car_mattes_light_internals.R car_mattes_light_internals.G car_mattes_light_internals.B}
+Copy {
+inputs 2
+from0 rgba.alpha
+to0 car_mattes_light_internals.R
+name Copy10
+xpos -1989
+ypos -475
+}
+Copy {
+inputs 2
+from0 rgba.alpha
+to0 car_mattes_light_internals.G
+name Copy11
+xpos -1769
+ypos -475
+}
+Copy {
+inputs 2
+from0 rgba.alpha
+to0 car_mattes_light_internals.B
+name Copy20
+xpos -1549
+ypos -475
+}
+add_layer {car_mattes_main car_mattes_main.paint car_mattes_main.green car_mattes_main.window}
+Copy {
+inputs 2
+from0 rgba.alpha
+to0 car_mattes_main.paint
+name Copy1
+xpos -1228
+ypos -475
+}
+Copy {
+inputs 2
+from0 rgba.alpha
+to0 car_mattes_main.green
+name Copy2
+xpos -1008
+ypos -475
+}
+Copy {
+inputs 2
+from0 rgba.alpha
+to0 car_mattes_main.window
+name Copy3
+xpos -788
+ypos -475
+}
+Copy {
+inputs 2
+from0 rgba.alpha
+to0 car_mattes_lights.rear
+name Copy7
+xpos -456
+ypos -470
+}
+Copy {
+inputs 2
+from0 rgba.alpha
+to0 car_mattes_lights.fog_and_side
+name Copy8
+xpos -236
+ypos -470
+}
+Copy {
+inputs 2
+from0 rgba.alpha
+to0 car_mattes_lights.front
+name Copy9
+xpos -16
+ypos -470
+}
+add_layer {car_mattes_parts car_mattes_parts.metals car_mattes_parts.plastics car_mattes_parts.chrome}
+Copy {
+inputs 2
+from0 rgba.alpha
+to0 car_mattes_parts.plastics
+name Copy4
+xpos 314
+ypos -470
+}
+Copy {
+inputs 2
+from0 rgba.alpha
+to0 car_mattes_parts.metals
+name Copy5
+xpos 534
+ypos -470
+}
+Copy {
+inputs 2
+from0 rgba.alpha
+to0 car_mattes_parts.chrome
+name Copy6
+xpos 754
+ypos -470
+}
+add_layer {car_mattes_wheels car_mattes_wheels.brakes car_mattes_wheels.tyres car_mattes_wheels.alloys}
+Copy {
+inputs 2
+from0 rgba.alpha
+to0 car_mattes_wheels.brakes
+name Copy12
+xpos 1062
+ypos -470
+}
+Copy {
+inputs 2
+from0 rgba.alpha
+to0 car_mattes_wheels.tyres
+name Copy13
+xpos 1282
+ypos -470
+}
+Copy {
+inputs 2
+from0 rgba.alpha
+to0 car_mattes_wheels.alloys
+name Copy14
+xpos 1502
+ypos -470
+}
+Dot {
+name Dot8
+xpos 1530
+ypos -387
+}
+Dot {
+name Dot26
+xpos -2482
+ypos -396
+}
+Output {
+name Output1
+xpos -2510
+ypos -9
+}
+StickyNote {
+inputs 0
+name StickyNote1
+tile_color 0x1fff00ff
+label techRGB
+note_font_size 18
+xpos -1910
+ypos -1037
+}
+StickyNote {
+inputs 0
+name StickyNote12
+tile_color 0x1fff00ff
+label multimatte_parts
+note_font_size 18
+xpos 415
+ypos -1020
+}
+StickyNote {
+inputs 0
+name StickyNote2
+tile_color 0x1fff00ff
+label multimatte_wheels
+note_font_size 18
+xpos 1201
+ypos -996
+}
+end_group
